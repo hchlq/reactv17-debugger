@@ -69,6 +69,7 @@ var taskIdCounter = 1;
 var isSchedulerPaused = false;
 
 var currentTask = null;
+// 默认是 NormalPriority
 var currentPriorityLevel = NormalPriority;
 
 // This is set while performing work, to prevent re-entrancy.

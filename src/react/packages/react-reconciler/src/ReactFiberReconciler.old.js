@@ -229,16 +229,21 @@ export function updateContainer(element, container, parentComponent, callback) {
       warnIfNotScopedWithMatchingAct(current);
     }
   }
+
+  // 获取本次更新的优先级
   const lane = requestUpdateLane(current);
 
   if (enableSchedulingProfiler) {
     markRenderScheduled(lane);
   }
 
+  // 获取子树的上下文
   const context = getContextForSubtree(parentComponent);
   if (container.context === null) {
+    // 首次渲染
     container.context = context;
   } else {
+    // 更新
     container.pendingContext = context;
   }
 
@@ -259,9 +264,12 @@ export function updateContainer(element, container, parentComponent, callback) {
     }
   }
 
+  // 根据 eventTime 和 lane 创建本次更新的任务
   const update = createUpdate(eventTime, lane);
+
   // Caution: React DevTools currently depends on this property
   // being called "element".
+  // payload 是 element（即 JSX 生成的 element 对象），在构建 hostRoot 的 fiber 树时，会获取 element
   update.payload = {element};
 
   callback = callback === undefined ? null : callback;
@@ -275,12 +283,18 @@ export function updateContainer(element, container, parentComponent, callback) {
         );
       }
     }
+    // 赋值 callback
     update.callback = callback;
   }
 
+  // 将本次更新的任务入队
+  // 构造可以看：dios/shardQueue.dio
   enqueueUpdate(current, update);
+
+  // 开始调度更新
   scheduleUpdateOnFiber(current, lane, eventTime);
 
+  // 返回本次更新的车道 lane
   return lane;
 }
 

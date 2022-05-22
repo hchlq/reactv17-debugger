@@ -382,6 +382,7 @@ export function getCurrentTime() {
  * 获取本次更新的 lane
  */
 export function requestUpdateLane(fiber) {
+  // debugger
   // Special cases
   const mode = fiber.mode;
   if ((mode & BlockingMode) === NoMode) {
@@ -463,6 +464,11 @@ export function requestUpdateLane(fiber) {
   ) {
     lane = findUpdateLane(InputDiscreteLanePriority, currentEventWipLanes);
   } else {
+    // 满足一下两个条件
+    // 1. 不是 DiscreteEventContext
+    // 2. 是 DiscreteEventContext 但是 schedulerPriority 不是 UserBlockingSchedulerPriority
+    
+    // 获取 lanePriority
     const schedulerLanePriority =
       schedulerPriorityToLanePriority(schedulerPriority);
 
@@ -516,16 +522,20 @@ function requestRetryLane(fiber) {
 }
 
 export function scheduleUpdateOnFiber(fiber, lane, eventTime) {
+  // 检查嵌套的更新数是否超过了 50
   checkForNestedUpdates();
   warnAboutRenderPhaseUpdatesInDEV(fiber);
 
+  //! 从 fiber 开始，向上合并本次的 lane
   const root = markUpdateLaneFromFiberToRoot(fiber, lane);
   if (root === null) {
+    // 根为空
     warnAboutUpdateOnUnmountedFiberInDEV(fiber);
     return null;
   }
 
   // Mark that the root has a pending update.
+  // 标记 fiberRoot 有一个更新的任务
   markRootUpdated(root, lane, eventTime);
 
   if (root === workInProgressRoot) {
@@ -557,7 +567,7 @@ export function scheduleUpdateOnFiber(fiber, lane, eventTime) {
   // TODO: requestUpdateLanePriority also reads the priority. Pass the
   // priority as an argument to that function and this one.
   const priorityLevel = getCurrentPriorityLevel();
-
+  // debugger
   if (lane === SyncLane) {
     if (
       // Check if we're inside unbatchedUpdates
@@ -621,11 +631,14 @@ export function scheduleUpdateOnFiber(fiber, lane, eventTime) {
 // on a fiber.
 function markUpdateLaneFromFiberToRoot(sourceFiber, lane) {
   // Update the source fiber's lanes
+  // 从当前 sourceFiber 开始，合并 lane
   sourceFiber.lanes = mergeLanes(sourceFiber.lanes, lane);
+  // 合并 sourceFiber 对应的另外一个 fiber 树，即视图上对应的该节点
   let alternate = sourceFiber.alternate;
   if (alternate !== null) {
     alternate.lanes = mergeLanes(alternate.lanes, lane);
   }
+
   if (__DEV__) {
     if (
       alternate === null &&
@@ -635,6 +648,7 @@ function markUpdateLaneFromFiberToRoot(sourceFiber, lane) {
     }
   }
   // Walk the parent path to the root and update the child expiration time.
+  // 父亲的 childLanes 也要合并 lane
   let node = sourceFiber;
   let parent = sourceFiber.return;
   while (parent !== null) {
@@ -653,6 +667,7 @@ function markUpdateLaneFromFiberToRoot(sourceFiber, lane) {
     parent = parent.return;
   }
   if (node.tag === HostRoot) {
+    // HostRoot 类型的 node.stateNode 就是 fiberRoot
     const root = node.stateNode;
     return root;
   } else {
@@ -1137,6 +1152,9 @@ export function batchedEventUpdates(fn, a) {
   }
 }
 
+/**
+ * 离散事件的更新，例如 click 等事件
+ */
 export function discreteUpdates(fn, a, b, c, d) {
   const prevExecutionContext = executionContext;
   executionContext |= DiscreteEventContext;
@@ -1146,7 +1164,7 @@ export function discreteUpdates(fn, a, b, c, d) {
     try {
       setCurrentUpdateLanePriority(InputDiscreteLanePriority);
       return runWithPriority(
-        UserBlockingSchedulerPriority,
+        UserBlockingSchedulerPriority, // 以 UserBlockingSchedulerPriority 为优先级，调用 fn
         fn.bind(null, a, b, c, d),
       );
     } finally {

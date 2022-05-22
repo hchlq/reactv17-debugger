@@ -19,6 +19,8 @@ import {
 } from './SchedulerWithReactIntegration.new';
 
 // 车道优先级
+// schedulerPriority 转为 schedulerLanePriority 的有 0 2 8 10 15
+// 即 NoLanePriority, IdleLanePriority, DefaultLanePriority,  InputContinuousPriority, SyncLanePriority
 export const SyncLanePriority = 15;
 export const SyncBatchedLanePriority = 14;
 
@@ -472,7 +474,7 @@ export function findUpdateLane(lanePriority, wipLanes) {
       return lane;
     }
     case InputContinuousLanePriority: {
-      // 去掉 wipLanes 之后，从 InputContinuousLanes 中选择合适的车道
+      // 去掉 wipLanes 之后，从 InputContinuousLanes 中选择最右边车道为 1 的车道
       const lane = pickArbitraryLane(InputContinuousLanes & ~wipLanes);
       if (lane === NoLane) {
         // Shift to the next priority level
@@ -482,7 +484,7 @@ export function findUpdateLane(lanePriority, wipLanes) {
       return lane;
     }
     case DefaultLanePriority: {
-      // 去掉 wipLanes 之后，从 DefaultLanes 中选择合适的车道
+      // 去掉 wipLanes 之后，从 DefaultLanes 中选择最右边车道为 1 的车道
       let lane = pickArbitraryLane(DefaultLanes & ~wipLanes);
       if (lane === NoLane) {
         // If all the default lanes are already being worked on, look for a
@@ -501,6 +503,7 @@ export function findUpdateLane(lanePriority, wipLanes) {
     case RetryLanePriority: // Should be handled by findRetryLane instead
       break;
     case IdleLanePriority:
+      // 去掉 wipLanes 后，从 IdleLanes 中选择最右边车道为 1 的车道
       let lane = pickArbitraryLane(IdleLanes & ~wipLanes);
       if (lane === NoLane) {
         lane = pickArbitraryLane(IdleLanes);
@@ -553,9 +556,9 @@ export function findRetryLane(wipLanes) {
 }
 
 /**
- * 获取 lanes 中的最高位，最高位是最右边位为 1 的 lane 
+ * 获取 lanes 中的最高位，最高位是最右边位为 1 的 lane
  * @param {*} lanes 都是正数
- * @returns 最右边位为 1 的 lane 
+ * @returns 最右边位为 1 的 lane
  */
 function getHighestPriorityLane(lanes) {
   // 比如 lanes 为 3, -lanes 就为 -3
@@ -584,6 +587,11 @@ export function pickArbitraryLane(lanes) {
 }
 
 function pickArbitraryLaneIndex(lanes) {
+  // same as: 31 - Math.clz32(lanes)
+  // Math.clz32(lanes): 将 lanes 转为 32 位无符号整型之后，开头 0 的个数
+
+  //! e.g. lane 为 512，那么 clz32(512) === 20
+  //! 即 512 转为 32 位无符号二进制为： 00000000 00000000 00000010 00000000，即开头 0 的个数为 22
   return 31 - clz32(lanes);
 }
 
@@ -632,7 +640,14 @@ export function createLaneMap(initial) {
   return laneMap;
 }
 
+/**
+ * 标记 fiberRoot 存在更新
+ * 1. fiberRoot.pendingLanes 合并 updateLanes
+ * 2. 更新 suspendedLanes & pingedLanes
+ * 3. 计算 laneIndex 更新 eventTimes 对应的索引时间戳
+ */
 export function markRootUpdated(root, updateLane, eventTime) {
+  // fiberRoot.pendingLane 合并当前 updateLane
   root.pendingLanes |= updateLane;
 
   // TODO: Theoretically, any update to any lane can unblock any other lane. But
@@ -648,13 +663,18 @@ export function markRootUpdated(root, updateLane, eventTime) {
   // Unsuspend any update at equal or lower priority.
   const higherPriorityLanes = updateLane - 1; // Turns 0b1000 into 0b0111
 
+  // 更新 suspendedLanes & pingedLanes
   root.suspendedLanes &= higherPriorityLanes;
   root.pingedLanes &= higherPriorityLanes;
 
   const eventTimes = root.eventTimes;
+
+  // 获取该车道 lane 对应的索引
   const index = laneToIndex(updateLane);
+  // debugger
   // We can always overwrite an existing timestamp because we prefer the most
   // recent event, and we assume time is monotonically increasing.
+  //! 存储eventTime
   eventTimes[index] = eventTime;
 }
 

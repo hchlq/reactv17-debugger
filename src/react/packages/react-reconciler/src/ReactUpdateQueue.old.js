@@ -150,6 +150,9 @@ export function cloneUpdateQueue(current, workInProgress) {
   }
 }
 
+/**
+ * 创建更新任务
+ */
 export function createUpdate(eventTime, lane) {
   const update = {
     eventTime,
@@ -171,16 +174,23 @@ export function enqueueUpdate(fiber, update) {
     return;
   }
 
+  //  获取 shared 队列
   const sharedQueue = updateQueue.shared;
+  // 获取 pending 队列
   const pending = sharedQueue.pending;
+
   if (pending === null) {
     // This is the first update. Create a circular list.
+    // 首个更新任务，next 指针指向自己
     update.next = update;
   } else {
     update.next = pending.next;
     pending.next = update;
   }
+
+  // pending 指向本次更新的任务，pending.next 指向 sharedQueue 的第一个任务
   sharedQueue.pending = update;
+
 
   if (__DEV__) {
     if (
