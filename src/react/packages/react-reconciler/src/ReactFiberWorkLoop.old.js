@@ -360,12 +360,16 @@ export function requestEventTime() {
     // We're inside React, so it's fine to read the actual time.
     return now();
   }
+  // debugger
   // We're not inside React, so we may be in the middle of a browser event.
   if (currentEventTime !== NoTimestamp) {
     // Use the same start time for all updates until we enter React again.
     return currentEventTime;
   }
+
   // This is the first update since React yielded. Compute a new start time.
+  // 首次更新，如果多次更新，那么复用上面的 currentEventTime
+  // 获取与 performance.timing.navigationStart 的时间差
   currentEventTime = now();
   return currentEventTime;
 }
@@ -374,20 +378,27 @@ export function getCurrentTime() {
   return now();
 }
 
+/**
+ * 获取本次更新的 lane
+ */
 export function requestUpdateLane(fiber) {
   // Special cases
   const mode = fiber.mode;
   if ((mode & BlockingMode) === NoMode) {
+    // 没有 BlockingMode
     return SyncLane;
   } else if ((mode & ConcurrentMode) === NoMode) {
+    // 只有 BlockingMode
     return getCurrentPriorityLevel() === ImmediateSchedulerPriority
       ? SyncLane
       : SyncBatchedLane;
   } else if (
-    !deferRenderPhaseUpdateToNextBatch &&
-    (executionContext & RenderContext) !== NoContext &&
-    workInProgressRootRenderLanes !== NoLanes
+    // 是 ConcurrentMode
+    !deferRenderPhaseUpdateToNextBatch && // 不是延迟渲染阶段的更新到下一次更新中
+    (executionContext & RenderContext) !== NoContext && // 是 render 上下文
+    workInProgressRootRenderLanes !== NoLanes // workInProgressRootRenderLanes 至少存在 lane
   ) {
+    //! deferRenderPhaseUpdateToNextBatch 为 true，可以不用考虑这一条件
     // This is a render phase update. These are not officially supported. The
     // old behavior is to give this the same "thread" (expiration time) as
     // whatever is currently rendering. So if you call `setState` on a component
@@ -400,11 +411,13 @@ export function requestUpdateLane(fiber) {
     return pickArbitraryLane(workInProgressRootRenderLanes);
   }
 
+  // 为车道分配更新算法应该在所有的更新中保持稳定
   // The algorithm for assigning an update to a lane should be stable for all
   // updates at the same priority within the same event. To do this, the inputs
   // to the algorithm must be the same. For example, we use the `renderLanes`
   // to avoid choosing a lane that is already in the middle of rendering.
   //
+  // included 车道中可能在更新中被修改
   // However, the "included" lanes could be mutated in between updates in the
   // same event, like if you perform an update inside `flushSync`. Or any other
   // code path that might call `prepareFreshStack`.
@@ -418,14 +431,17 @@ export function requestUpdateLane(fiber) {
     currentEventWipLanes = workInProgressRootIncludedLanes;
   }
 
+  // 存在 transition 过渡更新
   const isTransition = requestCurrentTransition() !== NoTransition;
   if (isTransition) {
     if (currentEventPendingLanes !== NoLanes) {
+      // 更新 currentEventPendingLanes
       currentEventPendingLanes =
         mostRecentlyUpdatedRoot !== null
           ? mostRecentlyUpdatedRoot.pendingLanes
           : NoLanes;
     }
+    // 寻找 transition 车道
     return findTransitionLane(currentEventWipLanes, currentEventPendingLanes);
   }
 
@@ -450,6 +466,7 @@ export function requestUpdateLane(fiber) {
     const schedulerLanePriority =
       schedulerPriorityToLanePriority(schedulerPriority);
 
+    // decoupleUpdatePriorityFromScheduler 为 false
     if (decoupleUpdatePriorityFromScheduler) {
       // In the new strategy, we will track the current update lane priority
       // inside React and use that priority to select a lane for this update.

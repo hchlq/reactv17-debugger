@@ -18,6 +18,7 @@ import {
   NoPriority as NoSchedulerPriority,
 } from './SchedulerWithReactIntegration.new';
 
+// 车道优先级
 export const SyncLanePriority = 15;
 export const SyncBatchedLanePriority = 14;
 
@@ -45,6 +46,9 @@ const OffscreenLanePriority = 1;
 export const NoLanePriority = 0;
 
 const TotalLanes = 31;
+
+// 车道
+// 1 数量越多说明车道越多
 
 export const NoLanes = /*                        */ 0b0000000000000000000000000000000;
 export const NoLane = /*                          */ 0b0000000000000000000000000000000;
@@ -458,22 +462,27 @@ export function findUpdateLane(lanePriority, wipLanes) {
     case SyncBatchedLanePriority:
       return SyncBatchedLane;
     case InputDiscreteLanePriority: {
+      // 去掉 wipLanes 之后，从 InputDiscreteLanes 中选择最右边车道为 1 的车道
       const lane = pickArbitraryLane(InputDiscreteLanes & ~wipLanes);
       if (lane === NoLane) {
         // Shift to the next priority level
+        // InputDiscreteLanes 没有空的车道了，在 InputContinuousLane 中寻找车道
         return findUpdateLane(InputContinuousLanePriority, wipLanes);
       }
       return lane;
     }
     case InputContinuousLanePriority: {
+      // 去掉 wipLanes 之后，从 InputContinuousLanes 中选择合适的车道
       const lane = pickArbitraryLane(InputContinuousLanes & ~wipLanes);
       if (lane === NoLane) {
         // Shift to the next priority level
+        // InputContinuousLanes 没有剩余的车道了，在 DefaultLanePriority 中选择合适的车道
         return findUpdateLane(DefaultLanePriority, wipLanes);
       }
       return lane;
     }
     case DefaultLanePriority: {
+      // 去掉 wipLanes 之后，从 DefaultLanes 中选择合适的车道
       let lane = pickArbitraryLane(DefaultLanes & ~wipLanes);
       if (lane === NoLane) {
         // If all the default lanes are already being worked on, look for a
@@ -513,14 +522,17 @@ export function findUpdateLane(lanePriority, wipLanes) {
 export function findTransitionLane(wipLanes, pendingLanes) {
   // First look for lanes that are completely unclaimed, i.e. have no
   // pending work.
+  // 去掉已经占用的 transition 车道
   let lane = pickArbitraryLane(TransitionLanes & ~pendingLanes);
   if (lane === NoLane) {
     // If all lanes have pending work, look for a lane that isn't currently
     // being worked on.
+    // 所有的车道已经被 pendingLanes 占用完了，选择去掉 wipLanes 后看是否有可用的车道
     lane = pickArbitraryLane(TransitionLanes & ~wipLanes);
     if (lane === NoLane) {
       // If everything is being worked on, pick any lane. This has the
       // effect of interrupting the current work-in-progress.
+      // 所有的车道都被占用完了，那么选择最右边为 1 的最高的优先级的车道
       lane = pickArbitraryLane(TransitionLanes);
     }
   }
@@ -540,7 +552,16 @@ export function findRetryLane(wipLanes) {
   return lane;
 }
 
+/**
+ * 获取 lanes 中的最高位，最高位是最右边位为 1 的 lane 
+ * @param {*} lanes 都是正数
+ * @returns 最右边位为 1 的 lane 
+ */
 function getHighestPriorityLane(lanes) {
+  // 比如 lanes 为 3, -lanes 就为 -3
+  // 即 3：                            0000 0000 0000 0011
+  // -3 为 3 的补码，即取反 + 1，二进制： 1111 1111 1111 1101
+  //                                  0000 0000 0000 0001
   return lanes & -lanes;
 }
 
