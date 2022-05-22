@@ -102,6 +102,7 @@ function getClientEnvironment(publicUrl) {
     __PROFILE__: true,
     __UMD__: true,
     __EXPERIMENTAL__: true,
+    __VARIANT__: true
   };
 
   return { raw, stringified };
