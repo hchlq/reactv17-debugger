@@ -76,6 +76,7 @@ export const SomeRetryLane = /*                  */ 0b00000100000000000000000000
 
 export const SelectiveHydrationLane = /*          */ 0b0000100000000000000000000000000;
 
+// 不是空闲时执行的任务
 const NonIdleLanes = /*                                 */ 0b0000111111111111111111111111111;
 
 export const IdleHydrationLane = /*               */ 0b0001000000000000000000000000000;
@@ -227,10 +228,12 @@ export function getNextLanes(root, wipLanes) {
   // Early bailout if there's no pending work left.
   const pendingLanes = root.pendingLanes;
   if (pendingLanes === NoLanes) {
+    // 没有更新的任务
     return_highestLanePriority = NoLanePriority;
     return NoLanes;
   }
 
+  // 默认是 NoLanes 和 NoLanePriority
   let nextLanes = NoLanes;
   let nextLanePriority = NoLanePriority;
 
@@ -239,7 +242,9 @@ export function getNextLanes(root, wipLanes) {
   const pingedLanes = root.pingedLanes;
 
   // Check if any work has expired.
+  // debugger
   if (expiredLanes !== NoLanes) {
+    // 存在过期的任务，优先调度过期的任务
     nextLanes = expiredLanes;
     nextLanePriority = return_highestLanePriority = SyncLanePriority;
   } else {
@@ -247,8 +252,12 @@ export function getNextLanes(root, wipLanes) {
     // even if the work is suspended.
     const nonIdlePendingLanes = pendingLanes & NonIdleLanes;
     if (nonIdlePendingLanes !== NoLanes) {
+      // 存在非 Idle 的 lane
+
+      // 去除掉 suspendedLanes
       const nonIdleUnblockedLanes = nonIdlePendingLanes & ~suspendedLanes;
       if (nonIdleUnblockedLanes !== NoLanes) {
+        // 从 nonIdleUnblockedLanes 选出最高的优先级
         nextLanes = getHighestPriorityLanes(nonIdleUnblockedLanes);
         nextLanePriority = return_highestLanePriority;
       } else {
@@ -260,6 +269,7 @@ export function getNextLanes(root, wipLanes) {
       }
     } else {
       // The only remaining work is Idle.
+      // idleLanes
       const unblockedLanes = pendingLanes & ~suspendedLanes;
       if (unblockedLanes !== NoLanes) {
         nextLanes = getHighestPriorityLanes(unblockedLanes);
@@ -281,6 +291,9 @@ export function getNextLanes(root, wipLanes) {
 
   // If there are higher priority lanes, we'll include them even if they
   // are suspended.
+  // debugger
+  // console.log(getEqualOrHigherPriorityLanes(nextLanes))
+  // 例如 nextLanes 是 10000，那么 getEqualOrHigherPriorityLanes 计算出来的值为 011111 
   nextLanes = pendingLanes & getEqualOrHigherPriorityLanes(nextLanes);
 
   // If we're already in the middle of a render, switching lanes will interrupt
@@ -293,9 +306,11 @@ export function getNextLanes(root, wipLanes) {
     // bother waiting until the root is complete.
     (wipLanes & suspendedLanes) === NoLanes
   ) {
+    // 在 wipLanes 中选取优先级最高的车道
     getHighestPriorityLanes(wipLanes);
     const wipLanePriority = return_highestLanePriority;
     if (nextLanePriority <= wipLanePriority) {
+      // 本次计算的 lane 大于 wipLanePriority
       return wipLanes;
     } else {
       return_highestLanePriority = nextLanePriority;
@@ -315,7 +330,7 @@ export function getNextLanes(root, wipLanes) {
   // entanglement is usually "best effort": we'll try our best to render the
   // lanes in the same batch, but it's not worth throwing out partially
   // completed work in order to do it.
-  //
+
   // For those exceptions where entanglement is semantically important, like
   // useMutableSource, we should ensure that there is no partial work at the
   // time we apply the entanglement.
@@ -323,6 +338,7 @@ export function getNextLanes(root, wipLanes) {
   if (entangledLanes !== NoLanes) {
     const entanglements = root.entanglements;
     let lanes = nextLanes & entangledLanes;
+    // nextLanes 中包含 entangledLanes，那么将相交的部分加到 nextLanes 中
     while (lanes > 0) {
       const index = pickArbitraryLaneIndex(lanes);
       const lane = 1 << index;
@@ -568,13 +584,19 @@ function getHighestPriorityLane(lanes) {
   return lanes & -lanes;
 }
 
+/**
+ * 获取最低的优先级
+ */
 function getLowestPriorityLane(lanes) {
   // This finds the most significant non-zero bit.
+  // 获取最左边的车道为 1 的索引
   const index = 31 - clz32(lanes);
   return index < 0 ? NoLanes : 1 << index;
 }
 
 function getEqualOrHigherPriorityLanes(lanes) {
+  // 如果 getLowestPriorityLane(lanes) 返回了 1000
+  // 那么 (getLowestPriorityLane(lanes) << 1) - 1, 就为 10000 - 1 ===> 01111
   return (getLowestPriorityLane(lanes) << 1) - 1;
 }
 
