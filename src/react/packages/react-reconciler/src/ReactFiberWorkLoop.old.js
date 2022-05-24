@@ -704,6 +704,7 @@ function ensureRootIsScheduled(root, currentTime) {
   markStarvedLanesAsExpired(root, currentTime);
 
   // Determine the next lanes to work on, and their priority.
+  // 决定本次更新的 lane，同时确定 newCallbackPriority
   const nextLanes = getNextLanes(
     root,
     root === workInProgressRoot ? workInProgressRootRenderLanes : NoLanes,
@@ -724,6 +725,7 @@ function ensureRootIsScheduled(root, currentTime) {
   // Check if there's an existing task. We may be able to reuse it.
   if (existingCallbackNode !== null) {
     const existingCallbackPriority = root.callbackPriority;
+    // 本次的 lane 和上次一样，复用上一次即可，不重新调用
     if (existingCallbackPriority === newCallbackPriority) {
       // The priority hasn't changed. We can reuse the existing task. Exit.
       return;
