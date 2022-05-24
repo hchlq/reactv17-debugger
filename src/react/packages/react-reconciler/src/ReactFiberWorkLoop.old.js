@@ -467,7 +467,7 @@ export function requestUpdateLane(fiber) {
     // 满足一下两个条件
     // 1. 不是 DiscreteEventContext
     // 2. 是 DiscreteEventContext 但是 schedulerPriority 不是 UserBlockingSchedulerPriority
-    
+
     // 获取 lanePriority
     const schedulerLanePriority =
       schedulerPriorityToLanePriority(schedulerPriority);
@@ -566,15 +566,22 @@ export function scheduleUpdateOnFiber(fiber, lane, eventTime) {
 
   // TODO: requestUpdateLanePriority also reads the priority. Pass the
   // priority as an argument to that function and this one.
+  // 调度优先级 -> 优先级等级
   const priorityLevel = getCurrentPriorityLevel();
+
   // debugger
-  if (lane === SyncLane) {
+  if (lane === SyncLane) { 
+    // render 模式
     if (
       // Check if we're inside unbatchedUpdates
       (executionContext & LegacyUnbatchedContext) !== NoContext &&
       // Check if we're not already rendering
       (executionContext & (RenderContext | CommitContext)) === NoContext
     ) {
+      //! 首次挂载
+      // 1. 执行上下文中包含 LegacyUnbatchedContext
+      // 2. 不再 render 执行上下文 和 Commit 上下文
+
       // Register pending interactions on the root to avoid losing traced interaction data.
       schedulePendingInteractions(root, lane);
 
@@ -596,6 +603,8 @@ export function scheduleUpdateOnFiber(fiber, lane, eventTime) {
       }
     }
   } else {
+    // createBlockingRoot 或者 createRoot 
+
     // Schedule a discrete update but only if it's not Sync.
     if (
       (executionContext & DiscreteEventContext) !== NoContext &&
@@ -604,6 +613,11 @@ export function scheduleUpdateOnFiber(fiber, lane, eventTime) {
       (priorityLevel === UserBlockingSchedulerPriority ||
         priorityLevel === ImmediateSchedulerPriority)
     ) {
+      // 必须同时满足以下条件，才能调度一个离散的更新
+      // 1. 上下文中包含「离散的事件上下文」
+      // 2. 当前的优先级是「用户阻塞的优先级」或「立即的优先级」
+
+      // 存储等待更新的离散事件更新的 root
       // This is the result of a discrete event. Track the lowest priority
       // discrete update per root so we can flush them early, if needed.
       if (rootsWithPendingDiscreteUpdates === null) {
@@ -612,6 +626,7 @@ export function scheduleUpdateOnFiber(fiber, lane, eventTime) {
         rootsWithPendingDiscreteUpdates.add(root);
       }
     }
+
     // Schedule other updates after in case the callback is sync.
     ensureRootIsScheduled(root, eventTime);
     schedulePendingInteractions(root, lane);
@@ -685,6 +700,7 @@ function ensureRootIsScheduled(root, currentTime) {
 
   // Check if any lanes are being starved by other work. If so, mark them as
   // expired so we know to work on those next.
+  // 标记饥饿的 lane 已经过期，如果一个任务多次没有得到调用，那么标记为 expired, 同时优先级也会变高
   markStarvedLanesAsExpired(root, currentTime);
 
   // Determine the next lanes to work on, and their priority.
@@ -1107,6 +1123,9 @@ export function deferredUpdates(fn) {
   }
 }
 
+/**
+ * 清空等待的离散的事件更新任务
+ */
 function flushPendingDiscreteUpdates() {
   if (rootsWithPendingDiscreteUpdates !== null) {
     // For each root with pending discrete updates, schedule a callback to

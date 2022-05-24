@@ -11,7 +11,8 @@ const App = () => {
   return <h3 onClick={handleClick}>{count}</h3>;
 };
 
-const root = ReactDOM.createRoot(document.querySelector("#root"));
+// const root = ReactDOM.createRoot(document.querySelector("#root"));
+const root = ReactDOM.createBlockingRoot(document.querySelector("#root"));
 root.render(<App />);
 
 // const render = () => {

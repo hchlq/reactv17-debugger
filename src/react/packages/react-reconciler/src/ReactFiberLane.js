@@ -355,10 +355,16 @@ export function getMostRecentEventTime(root, lanes) {
   return mostRecentEventTime;
 }
 
+/**
+ * 计算一个新的过期时间
+ */
 function computeExpirationTime(lane, currentTime) {
   // TODO: Expiration heuristic is constant per lane, so could use a map.
+  // 选取 lane 中优先级最高的车道
   getHighestPriorityLanes(lane);
+
   const priority = return_highestLanePriority;
+
   if (priority >= InputContinuousLanePriority) {
     // User interactions should expire slightly more quickly.
     //
@@ -399,7 +405,11 @@ export function markStarvedLanesAsExpired(root, currentTime) {
   // it as expired to force it to finish.
   let lanes = pendingLanes;
   while (lanes > 0) {
+    // 获取 lanes 中最左边 1 距离右边的索引
+    // 比如 000000000 000000000 000000100 000000000，那么得到的为 31 - 22 = 9
     const index = pickArbitraryLaneIndex(lanes);
+    // 得到对应的 lane
+    // e.g. index: 9, lanes: 10 00000000 
     const lane = 1 << index;
 
     const expirationTime = expirationTimes[index];
@@ -411,15 +421,25 @@ export function markStarvedLanesAsExpired(root, currentTime) {
         (lane & suspendedLanes) === NoLanes ||
         (lane & pingedLanes) !== NoLanes
       ) {
-        // Assumes timestamps are monotonically increasing.
+        // 1. 不是 suspendedLane  或者 是 pingedLane
+
+        // Assumes timestamps are monotonically increasing.  
+        // monotonically increasing. 单调递增
+        // 计算一个新的过期时间
         expirationTimes[index] = computeExpirationTime(lane, currentTime);
       }
     } else if (expirationTime <= currentTime) {
       // This lane expired
+      // 已经过期了
       root.expiredLanes |= lane;
     }
 
+    // lanes 去掉当前 lane，继续处理向右处理其他的 lane
     lanes &= ~lane;
+
+    // e.g. lanes === 3
+    // 1. index === 1, lane === 2, lanes = 3 & ~2 === 1 
+    // 2. index === 0, lane === 1, lanes = 1 & ~1 === 0
   }
 }
 

@@ -53,6 +53,7 @@ if (enableSchedulerTracing) {
 
 const fakeCallbackNode = {};
 
+// 与调度优先级一一对应
 // Except for NoPriority, these correspond to Scheduler priorities. We use
 // ascending numbers so we can compare them like numbers. They start at 90 to
 // avoid clashing with Scheduler's priorities.
