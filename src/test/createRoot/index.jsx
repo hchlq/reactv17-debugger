@@ -11,9 +11,27 @@ const App = () => {
   return <h3 onClick={handleClick}>{count}</h3>;
 };
 
-// const root = ReactDOM.createRoot(document.querySelector("#root"));
-const root = ReactDOM.createBlockingRoot(document.querySelector("#root"));
+// const list = [];
+// for (let i = 0; i < 10000; i++) {
+//   list.push(i);
+// }
+
+// const App = () => {
+//   return (
+//     <>
+//       <ul>
+//         {list.map((item) => (
+//           <li key={item}>{item}</li>
+//         ))}
+//       </ul>
+//     </>
+//   );
+// };
+
+const root = ReactDOM.createRoot(document.querySelector("#root"));
+// const root = ReactDOM.createBlockingRoot(document.querySelector("#root"));
 root.render(<App />);
+// ReactDOM.render(<App />, document.querySelector('#root'))
 
 // const render = () => {
 //   a++;
@@ -22,4 +40,3 @@ root.render(<App />);
 
 // render();
 
-// ReactDOM.render(<App />, document.querySelector('#root'))

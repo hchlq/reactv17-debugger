@@ -30,6 +30,8 @@ const {
   unstable_requestPaint: Scheduler_requestPaint,
   unstable_now: Scheduler_now,
   unstable_getCurrentPriorityLevel: Scheduler_getCurrentPriorityLevel,
+
+  // Scheduler 优先级
   unstable_ImmediatePriority: Scheduler_ImmediatePriority,
   unstable_UserBlockingPriority: Scheduler_UserBlockingPriority,
   unstable_NormalPriority: Scheduler_NormalPriority,
@@ -128,10 +130,15 @@ export function runWithPriority(reactPriorityLevel, fn) {
 }
 
 export function scheduleCallback(reactPriorityLevel, callback, options) {
+  // 先转为调度优先级
   const priorityLevel = reactPriorityToSchedulerPriority(reactPriorityLevel);
   return Scheduler_scheduleCallback(priorityLevel, callback, options);
 }
 
+/**
+ * 同步的更新，自己维护一个队列，只在第一次向 `Scheduler_scheduledCallback` 注册回调
+ * 后面更新的时候调用 `flushSyncCallbackQueue` 即可
+ */
 export function scheduleSyncCallback(callback) {
   // Push this callback into an internal queue. We'll flush these either in
   // the next tick, or earlier if something calls `flushSyncCallbackQueue`.

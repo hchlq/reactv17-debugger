@@ -130,6 +130,8 @@ if (
     shouldYieldToHost = function () {
       const currentTime = getCurrentTime();
       if (currentTime >= deadline) {
+        // 超过了本次调度的时间片
+
         // There's no time left. We may want to yield control of the main
         // thread, so the browser can perform high priority tasks. The main ones
         // are painting and user input. If there's a pending paint or a pending
@@ -157,6 +159,7 @@ if (
   } else {
     // `isInputPending` is not available. Since we have no way of knowing if
     // there's pending input, always yield at the end of the frame.
+    // 是否停止工作，以当前时间戳 >= deadline 来判断
     shouldYieldToHost = function () {
       return getCurrentTime() >= deadline;
     };
@@ -188,12 +191,15 @@ if (
       // Yield after `yieldInterval` ms, regardless of where we are in the vsync
       // cycle. This means there's always time remaining at the beginning of
       // the message event.
+      // 更新 deadline
       deadline = currentTime + yieldInterval;
       const hasTimeRemaining = true;
       try {
+        // `scheduledHostCallback` 即为 `flushWork`
+        // 执行 `flushWork`
         const hasMoreWork = scheduledHostCallback(
-          hasTimeRemaining,
-          currentTime,
+          hasTimeRemaining, // 默认有剩余的时间
+          currentTime, // 初始时间
         );
         if (!hasMoreWork) {
           isMessageLoopRunning = false;
@@ -221,9 +227,13 @@ if (
   const port = channel.port2;
   channel.port1.onmessage = performWorkUntilDeadline;
 
+  /**
+   * 注册 `callback` 函数，使用 MessageChannel 调用 `callback` 
+   */
   requestHostCallback = function (callback) {
     scheduledHostCallback = callback;
     if (!isMessageLoopRunning) {
+      // 当前不是在 MessageLoop 中，则立即执行
       isMessageLoopRunning = true;
       port.postMessage(null);
     }

@@ -570,7 +570,7 @@ export function scheduleUpdateOnFiber(fiber, lane, eventTime) {
   const priorityLevel = getCurrentPriorityLevel();
 
   // debugger
-  if (lane === SyncLane) { 
+  if (lane === SyncLane) {
     // render 模式
     if (
       // Check if we're inside unbatchedUpdates
@@ -603,7 +603,7 @@ export function scheduleUpdateOnFiber(fiber, lane, eventTime) {
       }
     }
   } else {
-    // createBlockingRoot 或者 createRoot 
+    // createBlockingRoot 或者 createRoot
 
     // Schedule a discrete update but only if it's not Sync.
     if (
@@ -697,7 +697,7 @@ function markUpdateLaneFromFiberToRoot(sourceFiber, lane) {
 // exiting a task.
 function ensureRootIsScheduled(root, currentTime) {
   const existingCallbackNode = root.callbackNode;
-
+  // debugger;
   // Check if any lanes are being starved by other work. If so, mark them as
   // expired so we know to work on those next.
   // 标记饥饿的 lane 已经过期，如果一个任务多次没有得到调用，那么标记为 expired, 同时优先级也会变高
@@ -766,6 +766,7 @@ function ensureRootIsScheduled(root, currentTime) {
 function performConcurrentWorkOnRoot(root) {
   // Since we know we're in a React event, we can clear the current
   // event time. The next update will compute a new event time.
+  // 重置 eventTime, eventWipLanes, EventPendingLanes
   currentEventTime = NoTimestamp;
   currentEventWipLanes = NoLanes;
   currentEventPendingLanes = NoLanes;
@@ -777,11 +778,13 @@ function performConcurrentWorkOnRoot(root) {
 
   // Flush any pending passive effects before deciding which lanes to work on,
   // in case they schedule additional work.
+  // 在确定在那个车道工作之前，先执行 passive effects，防止他们调度一些额外的工作
   const originalCallbackNode = root.callbackNode;
   const didFlushPassiveEffects = flushPassiveEffects();
   if (didFlushPassiveEffects) {
     // Something in the passive effect phase may have canceled the current task.
     // Check if the task node for this root was changed.
+    // 在 `effect` 的执行中，取消了这个这个任务
     if (root.callbackNode !== originalCallbackNode) {
       // The current task was canceled. Exit. We don't need to call
       // `ensureRootIsScheduled` because the check above implies either that
@@ -794,15 +797,20 @@ function performConcurrentWorkOnRoot(root) {
 
   // Determine the next expiration time to work on, using the fields stored
   // on the root.
+  // 决定那个过期的任务需要执行
   let lanes = getNextLanes(
     root,
     root === workInProgressRoot ? workInProgressRootRenderLanes : NoLanes,
   );
+
+  
   if (lanes === NoLanes) {
+    // 不可能发生的，起到预防的作用
     // Defensive coding. This is never expected to happen.
     return null;
   }
 
+  // 启动渲染，构建 fiber 树
   let exitStatus = renderRootConcurrent(root, lanes);
 
   if (
@@ -819,6 +827,7 @@ function performConcurrentWorkOnRoot(root) {
     // So we'll throw out the current work and restart.
     prepareFreshStack(root, NoLanes);
   } else if (exitStatus !== RootIncomplete) {
+    // 已经完成了
     if (exitStatus === RootErrored) {
       executionContext |= RetryAfterError;
 
@@ -850,17 +859,25 @@ function performConcurrentWorkOnRoot(root) {
     // We now have a consistent tree. The next step is either to commit it,
     // or, if something suspended, wait to commit it after a timeout.
     const finishedWork = root.current.alternate;
+
+    // 更新 finishedWork 和 finishedLanes
     root.finishedWork = finishedWork;
     root.finishedLanes = lanes;
+
+    // 完成本次的构建
     finishConcurrentRender(root, exitStatus, lanes);
   }
 
+  // 确保根被调度
   ensureRootIsScheduled(root, now());
+
+  // 被中断了，返回该函数，放到下一个时间片继续恢复执行
   if (root.callbackNode === originalCallbackNode) {
     // The task node scheduled for this root is the same one that's
     // currently executed. Need to return a continuation.
     return performConcurrentWorkOnRoot.bind(null, root);
   }
+
   return null;
 }
 
@@ -1593,14 +1610,21 @@ function workLoopSync() {
 
 function renderRootConcurrent(root, lanes) {
   const prevExecutionContext = executionContext;
+
+  // 加上 RenderContext
   executionContext |= RenderContext;
+
+  // 更新 hook 的 Dispatcher
   const prevDispatcher = pushDispatcher();
 
   // If the root or lanes have changed, throw out the existing stack
   // and prepare a fresh one. Otherwise we'll continue where we left off.
   if (workInProgressRoot !== root || workInProgressRootRenderLanes !== lanes) {
     resetRenderTimer();
+
+    // 准备一颗新的工作的 fiber 树
     prepareFreshStack(root, lanes);
+
     startWorkOnPendingInteractions(root, lanes);
   }
 
@@ -1618,18 +1642,24 @@ function renderRootConcurrent(root, lanes) {
 
   do {
     try {
+      //! 循环的工作
       workLoopConcurrent();
       break;
     } catch (thrownValue) {
       handleError(root, thrownValue);
     }
   } while (true);
+
+  // 充值上下文的 context
   resetContextDependencies();
+
   if (enableSchedulerTracing) {
     popInteractions(prevInteractions);
   }
 
+  // 恢复 dispatcher 
   popDispatcher(prevDispatcher);
+  // 恢复上下文
   executionContext = prevExecutionContext;
 
   if (__DEV__) {
@@ -1640,12 +1670,14 @@ function renderRootConcurrent(root, lanes) {
 
   // Check if the tree has completed.
   if (workInProgress !== null) {
+    // 没有构建完成
     // Still work remaining.
     if (enableSchedulingProfiler) {
       markRenderYielded();
     }
     return RootIncomplete;
   } else {
+    // 构建完成了
     // Completed the tree.
     if (enableSchedulingProfiler) {
       markRenderStopped();
