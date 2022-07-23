@@ -217,6 +217,7 @@ export function createContainer(
 }
 
 export function updateContainer(element, container, parentComponent, callback) {
+  // debugger
   if (__DEV__) {
     onScheduleRoot(container, element);
   }

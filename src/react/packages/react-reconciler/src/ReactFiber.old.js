@@ -542,6 +542,7 @@ export function createFiberFromTypeAndProps(
   }
 
   const fiber = createFiber(fiberTag, pendingProps, key, mode);
+  console.log(type, resolvedType, type === resolvedType);
   fiber.elementType = type;
   fiber.type = resolvedType;
   fiber.lanes = lanes;
@@ -549,7 +550,18 @@ export function createFiberFromTypeAndProps(
   if (__DEV__) {
     fiber._debugOwner = owner;
   }
-
+  // if (type?.$$typeof === REACT_MEMO_TYPE) {
+  // Object.defineProperty(fiber, 'type', {
+  //   get() {
+  //     // debugger
+  //     return type
+  //   },
+  //   set() {
+  //     debugger
+  //   }
+  // })
+  // debugger
+  // }
   return fiber;
 }
 

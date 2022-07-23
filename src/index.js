@@ -1,7 +1,7 @@
-import './test/createRoot'
+// import './test/createRoot'
 
-// import * as React from "react";
-// import * as ReactDom from "react-dom";
-// import App from "./App";
+import * as React from "react";
+import * as ReactDom from "react-dom";
+import App from "./App";
 
-// ReactDom.render(<App />, document.getElementById("root"));
+ReactDom.render(<App />, document.getElementById("root"));

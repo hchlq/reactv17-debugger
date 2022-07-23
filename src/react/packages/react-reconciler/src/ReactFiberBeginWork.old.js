@@ -469,6 +469,7 @@ function updateSimpleMemoComponent(
   updateLanes,
   renderLanes,
 ) {
+  debugger
   // TODO: current can be non-null here even if the component
   // hasn't yet mounted. This happens when the inner render suspends.
   // We'll need to figure out if this is fine or can cause issues.
@@ -1241,13 +1242,13 @@ function mountLazyComponent(
   // This message intentionally doesn't mention ForwardRef or MemoComponent
   // because the fact that it's a separate type of work is an
   // implementation detail.
-  invariant(
-    false,
-    'Element type is invalid. Received a promise that resolves to: %s. ' +
-      'Lazy element type must resolve to a class or function.%s',
-    Component,
-    hint,
-  );
+  // invariant(
+  //   false,
+  //   'Element type is invalid. Received a promise that resolves to: %s. ' +
+  //     'Lazy element type must resolve to a class or function.%s',
+  //   Component,
+  //   hint,
+  // );
 }
 
 function mountIncompleteClassComponent(
@@ -3208,7 +3209,7 @@ function beginWork(current, workInProgress, renderLanes) {
   // sometimes bails out later in the begin phase. This indicates that we should
   // move this assignment out of the common path and into each branch.
   workInProgress.lanes = NoLanes;
-
+  // console.log(current?.elementType, current?.type, current?.elementType === current?.type)
   switch (workInProgress.tag) {
     case IndeterminateComponent: {
       return mountIndeterminateComponent(
@@ -3311,6 +3312,7 @@ function beginWork(current, workInProgress, renderLanes) {
           }
         }
       }
+      // debugger
       resolvedProps = resolveDefaultProps(type.type, resolvedProps);
       return updateMemoComponent(
         current,

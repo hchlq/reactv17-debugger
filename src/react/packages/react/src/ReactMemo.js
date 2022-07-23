@@ -9,9 +9,9 @@ import {REACT_MEMO_TYPE} from 'shared/ReactSymbols';
 
 import isValidElementType from 'shared/isValidElementType';
 
-export function memo<Props>(
-  type: React$ElementType,
-  compare?: (oldProps: Props, newProps: Props) => boolean,
+export function memo(
+  type,
+  compare,
 ) {
   if (__DEV__) {
     if (!isValidElementType(type)) {

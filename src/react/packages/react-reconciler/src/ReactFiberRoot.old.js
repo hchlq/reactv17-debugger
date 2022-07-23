@@ -48,7 +48,6 @@ function FiberRootNode(containerInfo, tag, hydrate) {
 
   this.entangledLanes = NoLanes;
   this.entanglements = createLaneMap(NoLanes);
-
   if (supportsHydration) {
     this.mutableSourceEagerHydrationData = null;
   }
