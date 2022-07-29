@@ -271,6 +271,7 @@ export function updateContainer(element, container, parentComponent, callback) {
   // Caution: React DevTools currently depends on this property
   // being called "element".
   // payload 是 element（即 JSX 生成的 element 对象），在构建 hostRoot 的 fiber 树时，会获取 element
+  // debugger
   update.payload = {element};
 
   callback = callback === undefined ? null : callback;

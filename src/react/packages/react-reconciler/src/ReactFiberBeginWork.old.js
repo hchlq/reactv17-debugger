@@ -469,7 +469,7 @@ function updateSimpleMemoComponent(
   updateLanes,
   renderLanes,
 ) {
-  debugger
+  // debugger
   // TODO: current can be non-null here even if the component
   // hasn't yet mounted. This happens when the inner render suspends.
   // We'll need to figure out if this is fine or can cause issues.
@@ -1328,79 +1328,17 @@ function mountIndeterminateComponent(
   }
 
   prepareToReadContext(workInProgress, renderLanes);
-  let value;
+  let value = renderWithHooks(
+    null,
+    workInProgress,
+    Component,
+    props,
+    context,
+    renderLanes,
+  );
 
-  if (__DEV__) {
-    if (
-      Component.prototype &&
-      typeof Component.prototype.render === 'function'
-    ) {
-      const componentName = getComponentName(Component) || 'Unknown';
-
-      if (!didWarnAboutBadClass[componentName]) {
-        console.error(
-          "The <%s /> component appears to have a render method, but doesn't extend React.Component. " +
-            'This is likely to cause errors. Change %s to extend React.Component instead.',
-          componentName,
-          componentName,
-        );
-        didWarnAboutBadClass[componentName] = true;
-      }
-    }
-
-    if (workInProgress.mode & StrictMode) {
-      ReactStrictModeWarnings.recordLegacyContextWarning(workInProgress, null);
-    }
-
-    setIsRendering(true);
-    ReactCurrentOwner.current = workInProgress;
-    value = renderWithHooks(
-      null,
-      workInProgress,
-      Component,
-      props,
-      context,
-      renderLanes,
-    );
-    setIsRendering(false);
-  } else {
-    value = renderWithHooks(
-      null,
-      workInProgress,
-      Component,
-      props,
-      context,
-      renderLanes,
-    );
-  }
   // React DevTools reads this flag.
   workInProgress.flags |= PerformedWork;
-
-  if (__DEV__) {
-    // Support for module components is deprecated and is removed behind a flag.
-    // Whether or not it would crash later, we want to show a good message in DEV first.
-    if (
-      typeof value === 'object' &&
-      value !== null &&
-      typeof value.render === 'function' &&
-      value.$$typeof === undefined
-    ) {
-      const componentName = getComponentName(Component) || 'Unknown';
-      if (!didWarnAboutModulePatternComponent[componentName]) {
-        console.error(
-          'The <%s /> component appears to be a function component that returns a class instance. ' +
-            'Change %s to a class that extends React.Component instead. ' +
-            "If you can't use a class try assigning the prototype on the function as a workaround. " +
-            "`%s.prototype = React.Component.prototype`. Don't use an arrow function since it " +
-            'cannot be called with `new` by React.',
-          componentName,
-          componentName,
-          componentName,
-        );
-        didWarnAboutModulePatternComponent[componentName] = true;
-      }
-    }
-  }
 
   if (
     // Run these checks in production only if the flag is off.
@@ -1474,38 +1412,8 @@ function mountIndeterminateComponent(
   } else {
     // Proceed under the assumption that this is a function component
     workInProgress.tag = FunctionComponent;
-    if (__DEV__) {
-      if (disableLegacyContext && Component.contextTypes) {
-        console.error(
-          '%s uses the legacy contextTypes API which is no longer supported. ' +
-            'Use React.createContext() with React.useContext() instead.',
-          getComponentName(Component) || 'Unknown',
-        );
-      }
-
-      if (
-        debugRenderPhaseSideEffectsForStrictMode &&
-        workInProgress.mode & StrictMode
-      ) {
-        disableLogs();
-        try {
-          value = renderWithHooks(
-            null,
-            workInProgress,
-            Component,
-            props,
-            context,
-            renderLanes,
-          );
-        } finally {
-          reenableLogs();
-        }
-      }
-    }
+    // value === nextChildren
     reconcileChildren(null, workInProgress, value, renderLanes);
-    if (__DEV__) {
-      validateFunctionComponentInDev(workInProgress, Component);
-    }
     return workInProgress.child;
   }
 }
@@ -2997,6 +2905,7 @@ function beginWork(current, workInProgress, renderLanes) {
       );
     }
   }
+
   if (current !== null) {
     const oldProps = current.memoizedProps;
     const newProps = workInProgress.pendingProps;
@@ -3262,6 +3171,7 @@ function beginWork(current, workInProgress, renderLanes) {
     case HostRoot:
       return updateHostRoot(current, workInProgress, renderLanes);
     case HostComponent:
+      // debugger
       return updateHostComponent(current, workInProgress, renderLanes);
     case HostText:
       return updateHostText(current, workInProgress);

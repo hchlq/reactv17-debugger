@@ -536,6 +536,7 @@ export function scheduleUpdateOnFiber(fiber, lane, eventTime) {
 
   // Mark that the root has a pending update.
   // 标记 fiberRoot 有一个更新的任务
+  // root.pendingLanes |= lane
   markRootUpdated(root, lane, eventTime);
 
   if (root === workInProgressRoot) {
@@ -709,6 +710,8 @@ function ensureRootIsScheduled(root, currentTime) {
     root,
     root === workInProgressRoot ? workInProgressRootRenderLanes : NoLanes,
   );
+
+  // Lane 优先级
   // This returns the priority level computed during the `getNextLanes` call.
   const newCallbackPriority = returnNextLanesPriority();
 
@@ -1075,11 +1078,12 @@ function performSyncWorkOnRoot(root) {
 
   // We now have a consistent tree. Because this is a sync render, we
   // will commit it even if something suspended.
+  // debugger
   const finishedWork = root.current.alternate;
   root.finishedWork = finishedWork;
   root.finishedLanes = lanes;
   commitRoot(root);
-
+  // debugger
   // Before exiting, make sure there's a callback scheduled for the next
   // pending level.
   ensureRootIsScheduled(root, now());

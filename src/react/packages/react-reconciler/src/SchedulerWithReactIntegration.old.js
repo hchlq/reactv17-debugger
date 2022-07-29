@@ -237,3 +237,9 @@ function flushSyncCallbackQueueImpl() {
     }
   }
 }
+
+// levelPriority -> lanePriority
+// lanePriority -> levelPriority
+
+// schedulerPriority -> levelPriority
+// levelPriority -> schedulerPriority

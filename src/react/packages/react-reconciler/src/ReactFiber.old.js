@@ -242,17 +242,10 @@ export function createWorkInProgress(current, pendingProps) {
     workInProgress.type = current.type;
     workInProgress.stateNode = current.stateNode;
 
-    if (__DEV__) {
-      // DEV-only fields
-      workInProgress._debugID = current._debugID;
-      workInProgress._debugSource = current._debugSource;
-      workInProgress._debugOwner = current._debugOwner;
-      workInProgress._debugHookTypes = current._debugHookTypes;
-    }
-
     workInProgress.alternate = current;
     current.alternate = workInProgress;
   } else {
+    // debugger
     workInProgress.pendingProps = pendingProps;
     // Needed because Blocks store data on type.
     workInProgress.type = current.type;
@@ -540,7 +533,6 @@ export function createFiberFromTypeAndProps(
       }
     }
   }
-
   const fiber = createFiber(fiberTag, pendingProps, key, mode);
   console.log(type, resolvedType, type === resolvedType);
   fiber.elementType = type;
@@ -565,11 +557,14 @@ export function createFiberFromTypeAndProps(
   return fiber;
 }
 
+/**
+ * @param {*} element JSX 节点对象信息
+ * @param {*} mode Fiber 节点的模式
+ * @param {*} lanes Fiber 任务的优先级
+ */
 export function createFiberFromElement(element, mode, lanes) {
+  // debugger
   let owner = null;
-  if (__DEV__) {
-    owner = element._owner;
-  }
   const type = element.type;
   const key = element.key;
   const pendingProps = element.props;
@@ -581,10 +576,6 @@ export function createFiberFromElement(element, mode, lanes) {
     mode,
     lanes,
   );
-  if (__DEV__) {
-    fiber._debugSource = element._source;
-    fiber._debugOwner = element._owner;
-  }
   return fiber;
 }
 
