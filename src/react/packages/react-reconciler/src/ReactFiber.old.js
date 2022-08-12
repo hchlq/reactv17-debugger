@@ -534,7 +534,7 @@ export function createFiberFromTypeAndProps(
     }
   }
   const fiber = createFiber(fiberTag, pendingProps, key, mode);
-  console.log(type, resolvedType, type === resolvedType);
+  // console.log(type, resolvedType, type === resolvedType);
   fiber.elementType = type;
   fiber.type = resolvedType;
   fiber.lanes = lanes;

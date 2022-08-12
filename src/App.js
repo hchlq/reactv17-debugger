@@ -10,6 +10,9 @@ const MemoComponent = memo(function X(){
 
 function App() {
   const [count, setCount] = useState(0)
+  if (count === 1) {
+    setCount(count + 1)
+  }
   return (
     <div className="App">
       <header>header</header>

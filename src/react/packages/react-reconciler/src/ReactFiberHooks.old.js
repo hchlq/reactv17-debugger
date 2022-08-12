@@ -275,6 +275,7 @@ export function renderWithHooks(
   secondArg,
   nextRenderLanes,
 ) {
+  // debugger
   renderLanes = nextRenderLanes;
   currentlyRenderingFiber = workInProgress;
 
@@ -360,6 +361,7 @@ export function renderWithHooks(
         ? HooksDispatcherOnRerenderInDEV
         : HooksDispatcherOnRerender;
 
+      // 重新执行一次
       children = Component(props, secondArg);
     } while (didScheduleRenderPhaseUpdateDuringThisPass);
   }
@@ -471,11 +473,7 @@ function mountWorkInProgressHook() {
 }
 
 function updateWorkInProgressHook() {
-  // This function is used both for updates and for re-renders triggered by a
-  // render phase update. It assumes there is either a current hook we can
-  // clone, or a work-in-progress hook from a previous render pass that we can
-  // use as a base. When we reach the end of the base list, we must switch to
-  // the dispatcher used for mounts.
+  debugger
   let nextCurrentHook;
   if (currentHook === null) {
     const current = currentlyRenderingFiber.alternate;
@@ -488,11 +486,16 @@ function updateWorkInProgressHook() {
     nextCurrentHook = currentHook.next;
   }
 
+  // debugger
   let nextWorkInProgressHook;
   if (workInProgressHook === null) {
     nextWorkInProgressHook = currentlyRenderingFiber.memoizedState;
   } else {
     nextWorkInProgressHook = workInProgressHook.next;
+  }
+  console.log(nextWorkInProgressHook)
+  if (nextWorkInProgressHook !== null) {
+    debugger
   }
 
   if (nextWorkInProgressHook !== null) {
@@ -605,7 +608,7 @@ function updateReducer(reducer, initialArg, init) {
     current.baseQueue = baseQueue = pendingQueue;
     queue.pending = null;
   }
-
+  // debugger
   if (baseQueue !== null) {
     // We have a queue to process.
     const first = baseQueue.next;

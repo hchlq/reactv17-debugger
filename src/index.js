@@ -15,16 +15,16 @@ import * as ReactDom from "react-dom";
 //     </h1>)
 
 // ReactDom.render(<App />, document.getElementById("root"));
-
+let a = 0
 const App = () => {
-    return (
-        <div>
-            <h1></h1>
-            <span></span>
-            text
-        </div>
-    )
-}
+  const [count, setCount] = React.useState(0);
+  if (a === 1) {
+      setCount(count + 1);
+  }
+  a++
+  console.log(a)
+  const memo = React.useMemo(() => {}, []);
+  return <h1 onClick={() => setCount(count + 1)}>{count}</h1>;
+};
 
-
-ReactDom.render(<App/>, document.getElementById('root'))
+ReactDom.render(<App />, document.getElementById("root"));
