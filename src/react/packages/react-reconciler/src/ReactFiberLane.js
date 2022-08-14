@@ -717,6 +717,7 @@ export function markRootUpdated(root, updateLane, eventTime) {
   // debugger
   // We can always overwrite an existing timestamp because we prefer the most
   // recent event, and we assume time is monotonically increasing.
+  // debugger
   //! 存储eventTime
   eventTimes[index] = eventTime;
 }

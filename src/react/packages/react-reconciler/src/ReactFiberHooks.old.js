@@ -276,16 +276,9 @@ export function renderWithHooks(
   nextRenderLanes,
 ) {
   // debugger
+  // console.log('=====', workInProgress)
   renderLanes = nextRenderLanes;
   currentlyRenderingFiber = workInProgress;
-
-  if (__DEV__) {
-    hookTypesDev = current !== null ? current._debugHookTypes : null;
-    hookTypesUpdateIndexDev = -1;
-    // Used for hot reloading:
-    ignorePreviousDependencies =
-      current !== null && current.type !== workInProgress.type;
-  }
 
   workInProgress.memoizedState = null;
   workInProgress.updateQueue = null;
@@ -304,25 +297,10 @@ export function renderWithHooks(
   // Using memoizedState to differentiate between mount/update only works if at least one stateful hook is used.
   // Non-stateful hooks (e.g. context) don't get added to memoizedState,
   // so memoizedState would be null during updates and mounts.
-  if (__DEV__) {
-    if (current !== null && current.memoizedState !== null) {
-      ReactCurrentDispatcher.current = HooksDispatcherOnUpdateInDEV;
-    } else if (hookTypesDev !== null) {
-      // This dispatcher handles an edge case where a component is updating,
-      // but no stateful hooks have been used.
-      // We want to match the production code behavior (which will use HooksDispatcherOnMount),
-      // but with the extra DEV validation to ensure hooks ordering hasn't changed.
-      // This dispatcher does that.
-      ReactCurrentDispatcher.current = HooksDispatcherOnMountWithHookTypesInDEV;
-    } else {
-      ReactCurrentDispatcher.current = HooksDispatcherOnMountInDEV;
-    }
-  } else {
-    ReactCurrentDispatcher.current =
-      current === null || current.memoizedState === null
-        ? HooksDispatcherOnMount
-        : HooksDispatcherOnUpdate;
-  }
+  ReactCurrentDispatcher.current =
+    current === null || current.memoizedState === null
+      ? HooksDispatcherOnMount
+      : HooksDispatcherOnUpdate;
 
   let children = Component(props, secondArg);
 
@@ -340,11 +318,6 @@ export function renderWithHooks(
       );
 
       numberOfReRenders += 1;
-      if (__DEV__) {
-        // Even when hot reloading, allow dependencies to stabilize
-        // after first render to prevent infinite render phase updates.
-        ignorePreviousDependencies = false;
-      }
 
       // Start over from the beginning of the list
       currentHook = null;
@@ -352,14 +325,7 @@ export function renderWithHooks(
 
       workInProgress.updateQueue = null;
 
-      if (__DEV__) {
-        // Also validate hook order for cascading updates.
-        hookTypesUpdateIndexDev = -1;
-      }
-
-      ReactCurrentDispatcher.current = __DEV__
-        ? HooksDispatcherOnRerenderInDEV
-        : HooksDispatcherOnRerender;
+      ReactCurrentDispatcher.current = HooksDispatcherOnRerender;
 
       // 重新执行一次
       children = Component(props, secondArg);
@@ -473,7 +439,7 @@ function mountWorkInProgressHook() {
 }
 
 function updateWorkInProgressHook() {
-  debugger
+  // debugger;
   let nextCurrentHook;
   if (currentHook === null) {
     const current = currentlyRenderingFiber.alternate;
@@ -493,10 +459,10 @@ function updateWorkInProgressHook() {
   } else {
     nextWorkInProgressHook = workInProgressHook.next;
   }
-  console.log(nextWorkInProgressHook)
-  if (nextWorkInProgressHook !== null) {
-    debugger
-  }
+  // console.log(nextWorkInProgressHook);
+  // if (nextWorkInProgressHook !== null) {
+  //   debugger;
+  // }
 
   if (nextWorkInProgressHook !== null) {
     // There's already a work-in-progress. Reuse it.
@@ -541,7 +507,6 @@ function createFunctionComponentUpdateQueue() {
 }
 
 function basicStateReducer(state, action) {
-  // $FlowFixMe: Flow doesn't like mixed types
   return typeof action === 'function' ? action(state) : action;
 }
 
@@ -571,10 +536,6 @@ function mountReducer(reducer, initialArg, init) {
 function updateReducer(reducer, initialArg, init) {
   const hook = updateWorkInProgressHook();
   const queue = hook.queue;
-  invariant(
-    queue !== null,
-    'Should have a queue. This is likely a bug in React. Please file an issue.',
-  );
 
   queue.lastRenderedReducer = reducer;
 
@@ -582,7 +543,7 @@ function updateReducer(reducer, initialArg, init) {
 
   // The last rebase update that is NOT part of the base state.
   let baseQueue = current.baseQueue;
-
+  console.log('newBaseQueueLast: 11', baseQueue)
   // The last pending update that hasn't been processed yet.
   const pendingQueue = queue.pending;
   if (pendingQueue !== null) {
@@ -595,20 +556,11 @@ function updateReducer(reducer, initialArg, init) {
       baseQueue.next = pendingFirst;
       pendingQueue.next = baseFirst;
     }
-    if (__DEV__) {
-      if (current.baseQueue !== baseQueue) {
-        // Internal invariant that should never happen, but feasibly could in
-        // the future if we implement resuming, or some form of that.
-        console.error(
-          'Internal error: Expected work-in-progress queue to be a clone. ' +
-            'This is a bug in React.',
-        );
-      }
-    }
+
     current.baseQueue = baseQueue = pendingQueue;
     queue.pending = null;
   }
-  // debugger
+
   if (baseQueue !== null) {
     // We have a queue to process.
     const first = baseQueue.next;
@@ -683,12 +635,14 @@ function updateReducer(reducer, initialArg, init) {
 
     // Mark that the fiber performed work, but only if the new state is
     // different from the current state.
+    // 前后两个值不一样
     if (!is(newState, hook.memoizedState)) {
       markWorkInProgressReceivedUpdate();
     }
 
     hook.memoizedState = newState;
     hook.baseState = newBaseState;
+    console.log('newBaseQueueLast: ', newBaseQueueLast)
     hook.baseQueue = newBaseQueueLast;
 
     queue.lastRenderedState = newState;
@@ -997,18 +951,22 @@ function mountState(initialState) {
     // $FlowFixMe: Flow doesn't like mixed types
     initialState = initialState();
   }
+
   hook.memoizedState = hook.baseState = initialState;
+
   const queue = (hook.queue = {
     pending: null,
     dispatch: null,
     lastRenderedReducer: basicStateReducer,
     lastRenderedState: initialState,
   });
+
   const dispatch = (queue.dispatch = dispatchAction.bind(
     null,
     currentlyRenderingFiber,
     queue,
   ));
+
   return [hook.memoizedState, dispatch];
 }
 
@@ -1487,17 +1445,8 @@ function rerenderOpaqueIdentifier() {
 }
 
 function dispatchAction(fiber, queue, action) {
-  if (__DEV__) {
-    if (typeof arguments[3] === 'function') {
-      console.error(
-        "State updates from the useState() and useReducer() Hooks don't support the " +
-          'second callback argument. To execute a side effect after ' +
-          'rendering, declare it in the component body with useEffect().',
-      );
-    }
-  }
-
   const eventTime = requestEventTime();
+
   const lane = requestUpdateLane(fiber);
 
   const update = {
@@ -1517,8 +1466,10 @@ function dispatchAction(fiber, queue, action) {
     update.next = pending.next;
     pending.next = update;
   }
+
   queue.pending = update;
 
+  // debugger
   const alternate = fiber.alternate;
   if (
     fiber === currentlyRenderingFiber ||
@@ -1530,6 +1481,15 @@ function dispatchAction(fiber, queue, action) {
     didScheduleRenderPhaseUpdateDuringThisPass =
       didScheduleRenderPhaseUpdate = true;
   } else {
+    // console.log(
+    //   fiber.lanes,
+    //   alternate?.lanes,
+    //   fiber.lanes === NoLanes &&
+    //     (alternate === null || alternate.lanes === NoLanes),
+    // );
+    // if (alternate?.lanes === 1) {
+    //   window.hchlq = true
+    // }
     if (
       fiber.lanes === NoLanes &&
       (alternate === null || alternate.lanes === NoLanes)
@@ -1539,12 +1499,6 @@ function dispatchAction(fiber, queue, action) {
       // same as the current state, we may be able to bail out entirely.
       const lastRenderedReducer = queue.lastRenderedReducer;
       if (lastRenderedReducer !== null) {
-        let prevDispatcher;
-        if (__DEV__) {
-          prevDispatcher = ReactCurrentDispatcher.current;
-          ReactCurrentDispatcher.current =
-            InvalidNestedHooksDispatcherOnUpdateInDEV;
-        }
         try {
           const currentState = queue.lastRenderedState;
           const eagerState = lastRenderedReducer(currentState, action);
@@ -1561,37 +1515,27 @@ function dispatchAction(fiber, queue, action) {
             // time the reducer has changed.
             return;
           }
-        } catch (error) {
-          // Suppress the error. It will throw again in the render phase.
-        } finally {
-          if (__DEV__) {
-            ReactCurrentDispatcher.current = prevDispatcher;
-          }
-        }
+        } catch (error) {}
       }
     }
-    if (__DEV__) {
-      // $FlowExpectedError - jest isn't a global, and isn't recognized outside of tests
-      if ('undefined' !== typeof jest) {
-        warnIfNotScopedWithMatchingAct(fiber);
-        warnIfNotCurrentlyActingUpdatesInDev(fiber);
-      }
-    }
+    // if (fiber.lanes === 1) debugger
+    // debugger
+    // console.log(fiber.lanes)
     scheduleUpdateOnFiber(fiber, lane, eventTime);
   }
 
-  if (__DEV__) {
-    if (enableDebugTracing) {
-      if (fiber.mode & DebugTracingMode) {
-        const name = getComponentName(fiber.type) || 'Unknown';
-        logStateUpdateScheduled(name, lane, action);
-      }
-    }
-  }
+  // if (__DEV__) {
+  //   if (enableDebugTracing) {
+  //     if (fiber.mode & DebugTracingMode) {
+  //       const name = getComponentName(fiber.type) || 'Unknown';
+  //       logStateUpdateScheduled(name, lane, action);
+  //     }
+  //   }
+  // }
 
-  if (enableSchedulingProfiler) {
-    markStateUpdateScheduled(fiber, lane);
-  }
+  // if (enableSchedulingProfiler) {
+  //   markStateUpdateScheduled(fiber, lane);
+  // }
 }
 
 export const ContextOnlyDispatcher = {

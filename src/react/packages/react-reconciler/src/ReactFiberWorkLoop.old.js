@@ -356,6 +356,7 @@ export function getWorkInProgressRoot() {
 }
 
 export function requestEventTime() {
+  // debugger
   if ((executionContext & (RenderContext | CommitContext)) !== NoContext) {
     // We're inside React, so it's fine to read the actual time.
     return now();
@@ -806,7 +807,6 @@ function performConcurrentWorkOnRoot(root) {
     root === workInProgressRoot ? workInProgressRootRenderLanes : NoLanes,
   );
 
-  
   if (lanes === NoLanes) {
     // 不可能发生的，起到预防的作用
     // Defensive coding. This is never expected to happen.
@@ -1545,17 +1545,12 @@ function renderRootSync(root, lanes) {
   // If the root or lanes have changed, throw out the existing stack
   // and prepare a fresh one. Otherwise we'll continue where we left off.
   if (workInProgressRoot !== root || workInProgressRootRenderLanes !== lanes) {
+    // debugger
     prepareFreshStack(root, lanes);
     startWorkOnPendingInteractions(root, lanes);
   }
 
   const prevInteractions = pushInteractions(root);
-
-  if (__DEV__) {
-    if (enableDebugTracing) {
-      logRenderStarted(lanes);
-    }
-  }
 
   if (enableSchedulingProfiler) {
     markRenderStarted(lanes);
@@ -1570,9 +1565,6 @@ function renderRootSync(root, lanes) {
     }
   } while (true);
   resetContextDependencies();
-  if (enableSchedulerTracing) {
-    popInteractions(prevInteractions);
-  }
 
   executionContext = prevExecutionContext;
   popDispatcher(prevDispatcher);
@@ -1584,16 +1576,6 @@ function renderRootSync(root, lanes) {
       'Cannot commit an incomplete root. This error is likely caused by a ' +
         'bug in React. Please file an issue.',
     );
-  }
-
-  if (__DEV__) {
-    if (enableDebugTracing) {
-      logRenderStopped();
-    }
-  }
-
-  if (enableSchedulingProfiler) {
-    markRenderStopped();
   }
 
   // Set this to null to indicate there's no in-progress render.
@@ -1661,7 +1643,7 @@ function renderRootConcurrent(root, lanes) {
     popInteractions(prevInteractions);
   }
 
-  // 恢复 dispatcher 
+  // 恢复 dispatcher
   popDispatcher(prevDispatcher);
   // 恢复上下文
   executionContext = prevExecutionContext;
@@ -1951,6 +1933,7 @@ function commitRoot(root) {
 }
 
 function commitRootImpl(root, renderPriorityLevel) {
+  // console.log('111：', root.current?.child?.lanes, root.current.child?.alternate?.lanes)
   do {
     // `flushPassiveEffects` will call `flushSyncUpdateQueue` at the end, which
     // means `flushPassiveEffects` will sometimes result in additional
@@ -1970,23 +1953,7 @@ function commitRootImpl(root, renderPriorityLevel) {
   const finishedWork = root.finishedWork;
   const lanes = root.finishedLanes;
 
-  if (__DEV__) {
-    if (enableDebugTracing) {
-      logCommitStarted(lanes);
-    }
-  }
-
-  if (enableSchedulingProfiler) {
-    markCommitStarted(lanes);
-  }
-
   if (finishedWork === null) {
-    if (__DEV__) {
-      if (enableDebugTracing) {
-        logCommitStopped();
-      }
-    }
-
     if (enableSchedulingProfiler) {
       markCommitStopped();
     }
@@ -2078,22 +2045,12 @@ function commitRootImpl(root, renderPriorityLevel) {
 
     nextEffect = firstEffect;
     do {
-      if (__DEV__) {
-        invokeGuardedCallback(null, commitBeforeMutationEffects, null);
-        if (hasCaughtError()) {
-          invariant(nextEffect !== null, 'Should be working on an effect.');
-          const error = clearCaughtError();
-          captureCommitPhaseError(nextEffect, error);
-          nextEffect = nextEffect.nextEffect;
-        }
-      } else {
-        try {
-          commitBeforeMutationEffects();
-        } catch (error) {
-          invariant(nextEffect !== null, 'Should be working on an effect.');
-          captureCommitPhaseError(nextEffect, error);
-          nextEffect = nextEffect.nextEffect;
-        }
+      try {
+        commitBeforeMutationEffects();
+      } catch (error) {
+        invariant(nextEffect !== null, 'Should be working on an effect.');
+        captureCommitPhaseError(nextEffect, error);
+        nextEffect = nextEffect.nextEffect;
       }
     } while (nextEffect !== null);
 
@@ -2109,28 +2066,12 @@ function commitRootImpl(root, renderPriorityLevel) {
     // The next phase is the mutation phase, where we mutate the host tree.
     nextEffect = firstEffect;
     do {
-      if (__DEV__) {
-        invokeGuardedCallback(
-          null,
-          commitMutationEffects,
-          null,
-          root,
-          renderPriorityLevel,
-        );
-        if (hasCaughtError()) {
-          invariant(nextEffect !== null, 'Should be working on an effect.');
-          const error = clearCaughtError();
-          captureCommitPhaseError(nextEffect, error);
-          nextEffect = nextEffect.nextEffect;
-        }
-      } else {
-        try {
-          commitMutationEffects(root, renderPriorityLevel);
-        } catch (error) {
-          invariant(nextEffect !== null, 'Should be working on an effect.');
-          captureCommitPhaseError(nextEffect, error);
-          nextEffect = nextEffect.nextEffect;
-        }
+      try {
+        commitMutationEffects(root, renderPriorityLevel);
+      } catch (error) {
+        invariant(nextEffect !== null, 'Should be working on an effect.');
+        captureCommitPhaseError(nextEffect, error);
+        nextEffect = nextEffect.nextEffect;
       }
     } while (nextEffect !== null);
 
@@ -2150,22 +2091,12 @@ function commitRootImpl(root, renderPriorityLevel) {
     // layout, but class component lifecycles also fire here for legacy reasons.
     nextEffect = firstEffect;
     do {
-      if (__DEV__) {
-        invokeGuardedCallback(null, commitLayoutEffects, null, root, lanes);
-        if (hasCaughtError()) {
-          invariant(nextEffect !== null, 'Should be working on an effect.');
-          const error = clearCaughtError();
-          captureCommitPhaseError(nextEffect, error);
-          nextEffect = nextEffect.nextEffect;
-        }
-      } else {
-        try {
-          commitLayoutEffects(root, lanes);
-        } catch (error) {
-          invariant(nextEffect !== null, 'Should be working on an effect.');
-          captureCommitPhaseError(nextEffect, error);
-          nextEffect = nextEffect.nextEffect;
-        }
+      try {
+        commitLayoutEffects(root, lanes);
+      } catch (error) {
+        invariant(nextEffect !== null, 'Should be working on an effect.');
+        captureCommitPhaseError(nextEffect, error);
+        nextEffect = nextEffect.nextEffect;
       }
     } while (nextEffect !== null);
 
@@ -2269,10 +2200,6 @@ function commitRootImpl(root, renderPriorityLevel) {
 
   onCommitRootDevTools(finishedWork.stateNode, renderPriorityLevel);
 
-  if (__DEV__) {
-    onCommitRootTestSelector();
-  }
-
   // Always call this before exiting `commitRoot`, to ensure that any
   // additional work on this root is scheduled.
   ensureRootIsScheduled(root, now());
@@ -2285,12 +2212,6 @@ function commitRootImpl(root, renderPriorityLevel) {
   }
 
   if ((executionContext & LegacyUnbatchedContext) !== NoContext) {
-    if (__DEV__) {
-      if (enableDebugTracing) {
-        logCommitStopped();
-      }
-    }
-
     if (enableSchedulingProfiler) {
       markCommitStopped();
     }
@@ -2315,6 +2236,8 @@ function commitRootImpl(root, renderPriorityLevel) {
     markCommitStopped();
   }
 
+  // console.log('222: ', root.current.child.lanes, root.current.child.alternate.lanes);
+  // console.log('--------------------------------------------')
   return null;
 }
 
