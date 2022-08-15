@@ -535,6 +535,7 @@ function mountReducer(reducer, initialArg, init) {
 
 function updateReducer(reducer, initialArg, init) {
   const hook = updateWorkInProgressHook();
+
   const queue = hook.queue;
 
   queue.lastRenderedReducer = reducer;
@@ -543,7 +544,7 @@ function updateReducer(reducer, initialArg, init) {
 
   // The last rebase update that is NOT part of the base state.
   let baseQueue = current.baseQueue;
-  console.log('newBaseQueueLast: 11', baseQueue)
+  // console.log('newBaseQueueLast: 11', baseQueue)
   // The last pending update that hasn't been processed yet.
   const pendingQueue = queue.pending;
   if (pendingQueue !== null) {
@@ -642,7 +643,7 @@ function updateReducer(reducer, initialArg, init) {
 
     hook.memoizedState = newState;
     hook.baseState = newBaseState;
-    console.log('newBaseQueueLast: ', newBaseQueueLast)
+    // console.log('newBaseQueueLast: ', newBaseQueueLast)
     hook.baseQueue = newBaseQueueLast;
 
     queue.lastRenderedState = newState;
@@ -1524,18 +1525,6 @@ function dispatchAction(fiber, queue, action) {
     scheduleUpdateOnFiber(fiber, lane, eventTime);
   }
 
-  // if (__DEV__) {
-  //   if (enableDebugTracing) {
-  //     if (fiber.mode & DebugTracingMode) {
-  //       const name = getComponentName(fiber.type) || 'Unknown';
-  //       logStateUpdateScheduled(name, lane, action);
-  //     }
-  //   }
-  // }
-
-  // if (enableSchedulingProfiler) {
-  //   markStateUpdateScheduled(fiber, lane);
-  // }
 }
 
 export const ContextOnlyDispatcher = {
