@@ -1010,22 +1010,23 @@ function pushEffect(tag, create, destroy, deps) {
 function mountRef(initialValue) {
   const hook = mountWorkInProgressHook();
   const ref = {current: initialValue};
-  if (__DEV__) {
-    Object.seal(ref);
-  }
+
   hook.memoizedState = ref;
   return ref;
 }
 
-function updateRef(initialValue) {
+function updateRef() {
   const hook = updateWorkInProgressHook();
   return hook.memoizedState;
 }
 
 function mountEffectImpl(fiberFlags, hookFlags, create, deps) {
   const hook = mountWorkInProgressHook();
+
   const nextDeps = deps === undefined ? null : deps;
+  
   currentlyRenderingFiber.flags |= fiberFlags;
+
   hook.memoizedState = pushEffect(
     HookHasEffect | hookFlags,
     create,
@@ -1062,12 +1063,6 @@ function updateEffectImpl(fiberFlags, hookFlags, create, deps) {
 }
 
 function mountEffect(create, deps) {
-  if (__DEV__) {
-    // $FlowExpectedError - jest isn't a global, and isn't recognized outside of tests
-    if ('undefined' !== typeof jest) {
-      warnIfNotCurrentlyActingEffectsInDEV(currentlyRenderingFiber);
-    }
-  }
   return mountEffectImpl(
     UpdateEffect | PassiveEffect,
     HookPassive,
@@ -1077,12 +1072,6 @@ function mountEffect(create, deps) {
 }
 
 function updateEffect(create, deps) {
-  if (__DEV__) {
-    // $FlowExpectedError - jest isn't a global, and isn't recognized outside of tests
-    if ('undefined' !== typeof jest) {
-      warnIfNotCurrentlyActingEffectsInDEV(currentlyRenderingFiber);
-    }
-  }
   return updateEffectImpl(
     UpdateEffect | PassiveEffect,
     HookPassive,
@@ -1109,15 +1098,6 @@ function imperativeHandleEffect(create, ref) {
     };
   } else if (ref !== null && ref !== undefined) {
     const refObject = ref;
-    if (__DEV__) {
-      if (!refObject.hasOwnProperty('current')) {
-        console.error(
-          'Expected useImperativeHandle() first argument to either be a ' +
-            'ref callback or React.createRef() object. Instead received: %s.',
-          'an object with keys {' + Object.keys(refObject).join(', ') + '}',
-        );
-      }
-    }
     const inst = create();
     refObject.current = inst;
     return () => {
@@ -1127,17 +1107,6 @@ function imperativeHandleEffect(create, ref) {
 }
 
 function mountImperativeHandle(ref, create, deps) {
-  if (__DEV__) {
-    if (typeof create !== 'function') {
-      console.error(
-        'Expected useImperativeHandle() second argument to be a function ' +
-          'that creates a handle. Instead received: %s.',
-        create !== null ? typeof create : 'null',
-      );
-    }
-  }
-
-  // TODO: If deps are provided, should we skip comparing the ref itself?
   const effectDeps =
     deps !== null && deps !== undefined ? deps.concat([ref]) : null;
 
@@ -1524,7 +1493,6 @@ function dispatchAction(fiber, queue, action) {
     // console.log(fiber.lanes)
     scheduleUpdateOnFiber(fiber, lane, eventTime);
   }
-
 }
 
 export const ContextOnlyDispatcher = {

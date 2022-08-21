@@ -3,7 +3,8 @@
 import * as React from "react";
 import * as ReactDom from "react-dom";
 let count = 1;
-const App = () => {
+
+const App2 = () => {
   const [state, setState] = React.useState(0);
 
   const handleClick = () => {
@@ -20,7 +21,7 @@ const App = () => {
       // 第四次点击，满足条件 fiber.lanes === 0, fiber.alternate.lanes === 0
       setState(state + 1);
     } else {
-        setState(state + 1)
+      setState(state + 1);
     }
 
     count++;
@@ -28,11 +29,53 @@ const App = () => {
 
   return <h1 onClick={handleClick}>{state}</h1>;
 };
-
 // 第一次点击：first.lanes === 1
 // 第二次点击：first.alternate.lanes === 1
 // 第三次点击：first.lanes === 1
 // 第四次点击：first.alternate.lanes === 1
 // 第五次点击：first.lanes === 0 && first.alternate.lanes === 0
 
-ReactDom.render(<App />, document.getElementById("root"));
+// const Parent = () => {
+//   const [state, setState] = React.useState(0);
+
+//   useEvent(() => {
+//     console.log(state)
+//   })
+//   return (
+//     <div>
+//       <h1>{state}</h1>
+//       <button onClick={() => setState(state + 1)}>add</button>
+//       <Child />
+//     </div>
+//   );
+// };
+
+// const Child = () => {
+//   return <div>1</div>;
+// };
+
+// function useEvent(handler) {
+//   const handlerRef = React.useRef(null);
+
+//   // 更新的时机和执行的时机
+//   React.useLayoutEffect(() => {
+//     handlerRef.current = handler;
+//   });
+
+//   return React.useCallback((...args) => {
+//     const fn = handlerRef.current;
+//     return fn(...args);
+//   }, []);
+// }
+
+const Parent = () => {
+
+  React.useEffect(() => {
+    console.log('effect running')
+    debugger
+  }, [])
+
+  return null
+}
+
+ReactDom.render(<Parent />, document.getElementById("root"));

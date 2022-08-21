@@ -367,7 +367,9 @@ function schedulePassiveEffects(finishedWork) {
         (tag & HookPassive) !== NoHookEffect &&
         (tag & HookHasEffect) !== NoHookEffect
       ) {
+        // 执行销毁函数
         enqueuePendingPassiveHookEffectUnmount(finishedWork, effect);
+        // 执行回调函数
         enqueuePendingPassiveHookEffectMount(finishedWork, effect);
       }
       effect = next;

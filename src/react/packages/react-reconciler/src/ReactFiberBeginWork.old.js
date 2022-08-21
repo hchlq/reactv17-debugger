@@ -1044,6 +1044,7 @@ function updateHostComponent(current, workInProgress, renderLanes) {
   const prevProps = current !== null ? current.memoizedProps : null;
 
   let nextChildren = nextProps.children;
+  // typeof props.children === 'string' || typeof props.children === 'number'
   const isDirectTextChild = shouldSetTextContent(type, nextProps);
 
   if (isDirectTextChild) {
