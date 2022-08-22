@@ -568,10 +568,10 @@ function mountReducer(reducer, initialArg, init) {
 function updateReducer(reducer, initialArg, init) {
   const hook = updateWorkInProgressHook();
   const queue = hook.queue;
-  invariant(
-    queue !== null,
-    'Should have a queue. This is likely a bug in React. Please file an issue.',
-  );
+  // invariant(
+  //   queue !== null,
+  //   'Should have a queue. This is likely a bug in React. Please file an issue.',
+  // );
 
   queue.lastRenderedReducer = reducer;
 
@@ -1001,11 +1001,13 @@ function mountState(initialState) {
     lastRenderedReducer: basicStateReducer,
     lastRenderedState: initialState,
   });
+
   const dispatch = (queue.dispatch = dispatchAction.bind(
     null,
     currentlyRenderingFiber,
     queue,
   ));
+
   return [hook.memoizedState, dispatch];
 }
 
@@ -1165,15 +1167,15 @@ function imperativeHandleEffect(create, ref) {
 }
 
 function mountImperativeHandle(ref, create, deps) {
-  if (__DEV__) {
-    if (typeof create !== 'function') {
-      console.error(
-        'Expected useImperativeHandle() second argument to be a function ' +
-          'that creates a handle. Instead received: %s.',
-        create !== null ? typeof create : 'null',
-      );
-    }
-  }
+  // if (__DEV__) {
+  //   if (typeof create !== 'function') {
+  //     console.error(
+  //       'Expected useImperativeHandle() second argument to be a function ' +
+  //         'that creates a handle. Instead received: %s.',
+  //       create !== null ? typeof create : 'null',
+  //     );
+  //   }
+  // }
 
   // TODO: If deps are provided, should we skip comparing the ref itself?
   const effectDeps =
@@ -1577,14 +1579,14 @@ function dispatchAction(fiber, queue, action) {
     scheduleUpdateOnFiber(fiber, lane, eventTime);
   }
 
-  if (__DEV__) {
-    if (enableDebugTracing) {
-      if (fiber.mode & DebugTracingMode) {
-        const name = getComponentName(fiber.type) || 'Unknown';
-        logStateUpdateScheduled(name, lane, action);
-      }
-    }
-  }
+  // if (__DEV__) {
+  //   if (enableDebugTracing) {
+  //     if (fiber.mode & DebugTracingMode) {
+  //       const name = getComponentName(fiber.type) || 'Unknown';
+  //       logStateUpdateScheduled(name, lane, action);
+  //     }
+  //   }
+  // }
 
   if (enableSchedulingProfiler) {
     markStateUpdateScheduled(fiber, lane);

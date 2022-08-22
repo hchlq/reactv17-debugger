@@ -17,14 +17,7 @@ import * as ReactDom from "react-dom";
 // ReactDom.render(<App />, document.getElementById("root"));
 
 const App = () => {
-    return (
-        <div>
-            <h1></h1>
-            <span></span>
-            text
-        </div>
-    )
-}
+  return <div>1111</div>;
+};
 
-
-ReactDom.render(<App/>, document.getElementById('root'))
+ReactDom.render(<App />, document.getElementById("root"));
