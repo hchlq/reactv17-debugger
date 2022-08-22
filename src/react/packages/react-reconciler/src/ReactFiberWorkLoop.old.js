@@ -356,6 +356,7 @@ export function getWorkInProgressRoot() {
 }
 
 export function requestEventTime() {
+  // debugger
   if ((executionContext & (RenderContext | CommitContext)) !== NoContext) {
     // We're inside React, so it's fine to read the actual time.
     return now();
@@ -806,7 +807,6 @@ function performConcurrentWorkOnRoot(root) {
     root === workInProgressRoot ? workInProgressRootRenderLanes : NoLanes,
   );
 
-  
   if (lanes === NoLanes) {
     // 不可能发生的，起到预防的作用
     // Defensive coding. This is never expected to happen.
@@ -1545,17 +1545,12 @@ function renderRootSync(root, lanes) {
   // If the root or lanes have changed, throw out the existing stack
   // and prepare a fresh one. Otherwise we'll continue where we left off.
   if (workInProgressRoot !== root || workInProgressRootRenderLanes !== lanes) {
+    // debugger
     prepareFreshStack(root, lanes);
     startWorkOnPendingInteractions(root, lanes);
   }
 
   const prevInteractions = pushInteractions(root);
-
-  if (__DEV__) {
-    if (enableDebugTracing) {
-      logRenderStarted(lanes);
-    }
-  }
 
   if (enableSchedulingProfiler) {
     markRenderStarted(lanes);
@@ -1570,9 +1565,6 @@ function renderRootSync(root, lanes) {
     }
   } while (true);
   resetContextDependencies();
-  if (enableSchedulerTracing) {
-    popInteractions(prevInteractions);
-  }
 
   executionContext = prevExecutionContext;
   popDispatcher(prevDispatcher);
@@ -1584,16 +1576,6 @@ function renderRootSync(root, lanes) {
       'Cannot commit an incomplete root. This error is likely caused by a ' +
         'bug in React. Please file an issue.',
     );
-  }
-
-  if (__DEV__) {
-    if (enableDebugTracing) {
-      logRenderStopped();
-    }
-  }
-
-  if (enableSchedulingProfiler) {
-    markRenderStopped();
   }
 
   // Set this to null to indicate there's no in-progress render.
@@ -1661,7 +1643,7 @@ function renderRootConcurrent(root, lanes) {
     popInteractions(prevInteractions);
   }
 
-  // 恢复 dispatcher 
+  // 恢复 dispatcher
   popDispatcher(prevDispatcher);
   // 恢复上下文
   executionContext = prevExecutionContext;
@@ -1951,6 +1933,7 @@ function commitRoot(root) {
 }
 
 function commitRootImpl(root, renderPriorityLevel) {
+  // console.log('111：', root.current?.child?.lanes, root.current.child?.alternate?.lanes)
   do {
     // `flushPassiveEffects` will call `flushSyncUpdateQueue` at the end, which
     // means `flushPassiveEffects` will sometimes result in additional
@@ -1970,23 +1953,7 @@ function commitRootImpl(root, renderPriorityLevel) {
   const finishedWork = root.finishedWork;
   const lanes = root.finishedLanes;
 
-  if (__DEV__) {
-    if (enableDebugTracing) {
-      logCommitStarted(lanes);
-    }
-  }
-
-  if (enableSchedulingProfiler) {
-    markCommitStarted(lanes);
-  }
-
   if (finishedWork === null) {
-    if (__DEV__) {
-      if (enableDebugTracing) {
-        logCommitStopped();
-      }
-    }
-
     if (enableSchedulingProfiler) {
       markCommitStopped();
     }
@@ -2078,22 +2045,12 @@ function commitRootImpl(root, renderPriorityLevel) {
 
     nextEffect = firstEffect;
     do {
-      if (__DEV__) {
-        invokeGuardedCallback(null, commitBeforeMutationEffects, null);
-        if (hasCaughtError()) {
-          invariant(nextEffect !== null, 'Should be working on an effect.');
-          const error = clearCaughtError();
-          captureCommitPhaseError(nextEffect, error);
-          nextEffect = nextEffect.nextEffect;
-        }
-      } else {
-        try {
-          commitBeforeMutationEffects();
-        } catch (error) {
-          invariant(nextEffect !== null, 'Should be working on an effect.');
-          captureCommitPhaseError(nextEffect, error);
-          nextEffect = nextEffect.nextEffect;
-        }
+      try {
+        commitBeforeMutationEffects();
+      } catch (error) {
+        invariant(nextEffect !== null, 'Should be working on an effect.');
+        captureCommitPhaseError(nextEffect, error);
+        nextEffect = nextEffect.nextEffect;
       }
     } while (nextEffect !== null);
 
@@ -2109,28 +2066,12 @@ function commitRootImpl(root, renderPriorityLevel) {
     // The next phase is the mutation phase, where we mutate the host tree.
     nextEffect = firstEffect;
     do {
-      if (__DEV__) {
-        invokeGuardedCallback(
-          null,
-          commitMutationEffects,
-          null,
-          root,
-          renderPriorityLevel,
-        );
-        if (hasCaughtError()) {
-          invariant(nextEffect !== null, 'Should be working on an effect.');
-          const error = clearCaughtError();
-          captureCommitPhaseError(nextEffect, error);
-          nextEffect = nextEffect.nextEffect;
-        }
-      } else {
-        try {
-          commitMutationEffects(root, renderPriorityLevel);
-        } catch (error) {
-          invariant(nextEffect !== null, 'Should be working on an effect.');
-          captureCommitPhaseError(nextEffect, error);
-          nextEffect = nextEffect.nextEffect;
-        }
+      try {
+        commitMutationEffects(root, renderPriorityLevel);
+      } catch (error) {
+        invariant(nextEffect !== null, 'Should be working on an effect.');
+        captureCommitPhaseError(nextEffect, error);
+        nextEffect = nextEffect.nextEffect;
       }
     } while (nextEffect !== null);
 
@@ -2150,22 +2091,12 @@ function commitRootImpl(root, renderPriorityLevel) {
     // layout, but class component lifecycles also fire here for legacy reasons.
     nextEffect = firstEffect;
     do {
-      if (__DEV__) {
-        invokeGuardedCallback(null, commitLayoutEffects, null, root, lanes);
-        if (hasCaughtError()) {
-          invariant(nextEffect !== null, 'Should be working on an effect.');
-          const error = clearCaughtError();
-          captureCommitPhaseError(nextEffect, error);
-          nextEffect = nextEffect.nextEffect;
-        }
-      } else {
-        try {
-          commitLayoutEffects(root, lanes);
-        } catch (error) {
-          invariant(nextEffect !== null, 'Should be working on an effect.');
-          captureCommitPhaseError(nextEffect, error);
-          nextEffect = nextEffect.nextEffect;
-        }
+      try {
+        commitLayoutEffects(root, lanes);
+      } catch (error) {
+        invariant(nextEffect !== null, 'Should be working on an effect.');
+        captureCommitPhaseError(nextEffect, error);
+        nextEffect = nextEffect.nextEffect;
       }
     } while (nextEffect !== null);
 
@@ -2269,10 +2200,6 @@ function commitRootImpl(root, renderPriorityLevel) {
 
   onCommitRootDevTools(finishedWork.stateNode, renderPriorityLevel);
 
-  if (__DEV__) {
-    onCommitRootTestSelector();
-  }
-
   // Always call this before exiting `commitRoot`, to ensure that any
   // additional work on this root is scheduled.
   ensureRootIsScheduled(root, now());
@@ -2285,12 +2212,6 @@ function commitRootImpl(root, renderPriorityLevel) {
   }
 
   if ((executionContext & LegacyUnbatchedContext) !== NoContext) {
-    if (__DEV__) {
-      if (enableDebugTracing) {
-        logCommitStopped();
-      }
-    }
-
     if (enableSchedulingProfiler) {
       markCommitStopped();
     }
@@ -2315,6 +2236,8 @@ function commitRootImpl(root, renderPriorityLevel) {
     markCommitStopped();
   }
 
+  // console.log('222: ', root.current.child.lanes, root.current.child.alternate.lanes);
+  // console.log('--------------------------------------------')
   return null;
 }
 
@@ -2349,6 +2272,7 @@ function commitBeforeMutationEffects() {
 
       resetCurrentDebugFiberInDEV();
     }
+
     if ((flags & Passive) !== NoFlags) {
       // If there are passive effects, schedule a callback to flush at
       // the earliest opportunity.
@@ -2496,24 +2420,17 @@ function commitLayoutEffects(root, committedLanes) {
 export function flushPassiveEffects() {
   // Returns whether passive effects were flushed.
   if (pendingPassiveEffectsRenderPriority !== NoSchedulerPriority) {
+    // pendingPassiveEffectsRenderPriority 和 NormalSchedulerPriority 两个选一个优先级表低的
     const priorityLevel =
       pendingPassiveEffectsRenderPriority > NormalSchedulerPriority
         ? NormalSchedulerPriority
         : pendingPassiveEffectsRenderPriority;
+
+    // debugger
+    // 重置为 NoSchedulerPriority
     pendingPassiveEffectsRenderPriority = NoSchedulerPriority;
-    if (decoupleUpdatePriorityFromScheduler) {
-      const previousLanePriority = getCurrentUpdateLanePriority();
-      try {
-        setCurrentUpdateLanePriority(
-          schedulerPriorityToLanePriority(priorityLevel),
-        );
-        return runWithPriority(priorityLevel, flushPassiveEffectsImpl);
-      } finally {
-        setCurrentUpdateLanePriority(previousLanePriority);
-      }
-    } else {
-      return runWithPriority(priorityLevel, flushPassiveEffectsImpl);
-    }
+
+    return runWithPriority(priorityLevel, flushPassiveEffectsImpl);
   }
   return false;
 }
@@ -2544,13 +2461,6 @@ export function enqueuePendingPassiveHookEffectMount(fiber, effect) {
 
 export function enqueuePendingPassiveHookEffectUnmount(fiber, effect) {
   pendingPassiveHookEffectsUnmount.push(effect, fiber);
-  if (__DEV__) {
-    fiber.flags |= PassiveUnmountPendingDev;
-    const alternate = fiber.alternate;
-    if (alternate !== null) {
-      alternate.flags |= PassiveUnmountPendingDev;
-    }
-  }
   if (!rootDoesHavePassiveEffects) {
     rootDoesHavePassiveEffects = true;
     scheduleCallback(NormalSchedulerPriority, () => {
@@ -2571,32 +2481,11 @@ function flushPassiveEffectsImpl() {
   }
 
   const root = rootWithPendingPassiveEffects;
-  const lanes = pendingPassiveEffectsLanes;
   rootWithPendingPassiveEffects = null;
   pendingPassiveEffectsLanes = NoLanes;
 
-  invariant(
-    (executionContext & (RenderContext | CommitContext)) === NoContext,
-    'Cannot flush passive effects while already rendering.',
-  );
-
-  if (__DEV__) {
-    if (enableDebugTracing) {
-      logPassiveEffectsStarted(lanes);
-    }
-  }
-
-  if (enableSchedulingProfiler) {
-    markPassiveEffectsStarted(lanes);
-  }
-
-  if (__DEV__) {
-    isFlushingPassiveEffects = true;
-  }
-
   const prevExecutionContext = executionContext;
   executionContext |= CommitContext;
-  const prevInteractions = pushInteractions(root);
 
   // It's important that ALL pending passive effect destroy functions are called
   // before ANY passive effect create functions are called.
@@ -2614,103 +2503,28 @@ function flushPassiveEffectsImpl() {
     const destroy = effect.destroy;
     effect.destroy = undefined;
 
-    if (__DEV__) {
-      fiber.flags &= ~PassiveUnmountPendingDev;
-      const alternate = fiber.alternate;
-      if (alternate !== null) {
-        alternate.flags &= ~PassiveUnmountPendingDev;
-      }
-    }
-
     if (typeof destroy === 'function') {
-      if (__DEV__) {
-        setCurrentDebugFiberInDEV(fiber);
-        if (
-          enableProfilerTimer &&
-          enableProfilerCommitHooks &&
-          fiber.mode & ProfileMode
-        ) {
-          startPassiveEffectTimer();
-          invokeGuardedCallback(null, destroy, null);
-          recordPassiveEffectDuration(fiber);
-        } else {
-          invokeGuardedCallback(null, destroy, null);
-        }
-        if (hasCaughtError()) {
-          invariant(fiber !== null, 'Should be working on an effect.');
-          const error = clearCaughtError();
-          captureCommitPhaseError(fiber, error);
-        }
-        resetCurrentDebugFiberInDEV();
-      } else {
-        try {
-          if (
-            enableProfilerTimer &&
-            enableProfilerCommitHooks &&
-            fiber.mode & ProfileMode
-          ) {
-            try {
-              startPassiveEffectTimer();
-              destroy();
-            } finally {
-              recordPassiveEffectDuration(fiber);
-            }
-          } else {
-            destroy();
-          }
-        } catch (error) {
-          invariant(fiber !== null, 'Should be working on an effect.');
-          captureCommitPhaseError(fiber, error);
-        }
+      try {
+        destroy();
+      } catch (error) {
+        invariant(fiber !== null, 'Should be working on an effect.');
+        captureCommitPhaseError(fiber, error);
       }
     }
   }
+
   // Second pass: Create new passive effects.
   const mountEffects = pendingPassiveHookEffectsMount;
   pendingPassiveHookEffectsMount = [];
   for (let i = 0; i < mountEffects.length; i += 2) {
     const effect = mountEffects[i];
     const fiber = mountEffects[i + 1];
-    if (__DEV__) {
-      setCurrentDebugFiberInDEV(fiber);
-      if (
-        enableProfilerTimer &&
-        enableProfilerCommitHooks &&
-        fiber.mode & ProfileMode
-      ) {
-        startPassiveEffectTimer();
-        invokeGuardedCallback(null, invokePassiveEffectCreate, null, effect);
-        recordPassiveEffectDuration(fiber);
-      } else {
-        invokeGuardedCallback(null, invokePassiveEffectCreate, null, effect);
-      }
-      if (hasCaughtError()) {
-        invariant(fiber !== null, 'Should be working on an effect.');
-        const error = clearCaughtError();
-        captureCommitPhaseError(fiber, error);
-      }
-      resetCurrentDebugFiberInDEV();
-    } else {
-      try {
-        const create = effect.create;
-        if (
-          enableProfilerTimer &&
-          enableProfilerCommitHooks &&
-          fiber.mode & ProfileMode
-        ) {
-          try {
-            startPassiveEffectTimer();
-            effect.destroy = create();
-          } finally {
-            recordPassiveEffectDuration(fiber);
-          }
-        } else {
-          effect.destroy = create();
-        }
-      } catch (error) {
-        invariant(fiber !== null, 'Should be working on an effect.');
-        captureCommitPhaseError(fiber, error);
-      }
+    try {
+      const create = effect.create;
+      effect.destroy = create();
+    } catch (error) {
+      invariant(fiber !== null, 'Should be working on an effect.');
+      captureCommitPhaseError(fiber, error);
     }
   }
 
@@ -2726,34 +2540,6 @@ function flushPassiveEffectsImpl() {
       detachFiberAfterEffects(effect);
     }
     effect = nextNextEffect;
-  }
-
-  if (enableProfilerTimer && enableProfilerCommitHooks) {
-    const profilerEffects = pendingPassiveProfilerEffects;
-    pendingPassiveProfilerEffects = [];
-    for (let i = 0; i < profilerEffects.length; i++) {
-      const fiber = profilerEffects[i];
-      commitPassiveEffectDurations(root, fiber);
-    }
-  }
-
-  if (enableSchedulerTracing) {
-    popInteractions(prevInteractions);
-    finishPendingInteractions(root, lanes);
-  }
-
-  if (__DEV__) {
-    isFlushingPassiveEffects = false;
-  }
-
-  if (__DEV__) {
-    if (enableDebugTracing) {
-      logPassiveEffectsStopped();
-    }
-  }
-
-  if (enableSchedulingProfiler) {
-    markPassiveEffectsStopped();
   }
 
   executionContext = prevExecutionContext;

@@ -258,20 +258,37 @@ export function createWorkInProgress(current, pendingProps) {
     workInProgress.nextEffect = null;
     workInProgress.firstEffect = null;
     workInProgress.lastEffect = null;
-
-    if (enableProfilerTimer) {
-      // We intentionally reset, rather than copy, actualDuration & actualStartTime.
-      // This prevents time from endlessly accumulating in new commits.
-      // This has the downside of resetting values for different priority renders,
-      // But works for yielding (the common case) and should support resuming.
-      workInProgress.actualDuration = 0;
-      workInProgress.actualStartTime = -1;
-    }
   }
 
   workInProgress.childLanes = current.childLanes;
+  // let x = current.lanes
+  // if (window.hchlq && workInProgress.tag === 0) {
+  //   Object.defineProperty(current, 'lanes', {
+  //     get() {
+  //       return x
+  //     },
+  //     set(newV) {
+  //       if (newV === 0) {
+  //         debugger
+  //       }
+  //     }
+  //   })
+  //   Object.defineProperty(workInProgress, 'lanes', {
+  //     get() {
+  //       return x
+  //     },
+  //     set(newV) {
+  //       if (newV === 0) {
+  //         debugger
+  //       }
+  //     }
+  //   })
+  //   debugger
+  // }
+  // if (workInProgress.tag === 0) {
+  //   console.log('===', workInProgress.lanes, current.lanes)
+  // }
   workInProgress.lanes = current.lanes;
-
   workInProgress.child = current.child;
   workInProgress.memoizedProps = current.memoizedProps;
   workInProgress.memoizedState = current.memoizedState;
@@ -296,25 +313,6 @@ export function createWorkInProgress(current, pendingProps) {
   if (enableProfilerTimer) {
     workInProgress.selfBaseDuration = current.selfBaseDuration;
     workInProgress.treeBaseDuration = current.treeBaseDuration;
-  }
-
-  if (__DEV__) {
-    workInProgress._debugNeedsRemount = current._debugNeedsRemount;
-    switch (workInProgress.tag) {
-      case IndeterminateComponent:
-      case FunctionComponent:
-      case SimpleMemoComponent:
-        workInProgress.type = resolveFunctionForHotReloading(current.type);
-        break;
-      case ClassComponent:
-        workInProgress.type = resolveClassForHotReloading(current.type);
-        break;
-      case ForwardRef:
-        workInProgress.type = resolveForwardRefForHotReloading(current.type);
-        break;
-      default:
-        break;
-    }
   }
 
   return workInProgress;

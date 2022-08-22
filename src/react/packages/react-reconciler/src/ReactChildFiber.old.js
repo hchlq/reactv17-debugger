@@ -1164,6 +1164,8 @@ function ChildReconciler(shouldTrackSideEffects) {
       created.return = returnFiber;
       return created;
     } else {
+      // 创建新的 Fiber
+      // debugger
       const created = createFiberFromElement(element, returnFiber.mode, lanes);
       created.ref = coerceRef(returnFiber, currentFirstChild, element);
       created.return = returnFiber;
@@ -1234,8 +1236,12 @@ function ChildReconciler(shouldTrackSideEffects) {
     }
 
     // Handle object types
+    // console.log(newChild)
     const isObject = typeof newChild === 'object' && newChild !== null;
-
+    // console.log(newChild)
+    // if (typeof newChild?.type === 'function') {
+    //   debugger
+    // }
     if (isObject) {
       switch (newChild.$$typeof) {
         case REACT_ELEMENT_TYPE:
@@ -1362,7 +1368,9 @@ export function cloneChildFibers(current, workInProgress) {
   }
 
   let currentChild = workInProgress.child;
+  // 创建 currentChild 的 alternate
   let newChild = createWorkInProgress(currentChild, currentChild.pendingProps);
+
   workInProgress.child = newChild;
 
   newChild.return = workInProgress;
