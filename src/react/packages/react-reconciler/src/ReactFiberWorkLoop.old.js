@@ -2358,6 +2358,7 @@ function commitMutationEffects(root, renderPriorityLevel) {
         break;
       }
       case Deletion: {
+        debugger
         commitDeletion(root, nextEffect, renderPriorityLevel);
         break;
       }
@@ -2460,6 +2461,7 @@ export function enqueuePendingPassiveHookEffectMount(fiber, effect) {
 }
 
 export function enqueuePendingPassiveHookEffectUnmount(fiber, effect) {
+  // debugger
   pendingPassiveHookEffectsUnmount.push(effect, fiber);
   if (!rootDoesHavePassiveEffects) {
     rootDoesHavePassiveEffects = true;
@@ -2495,6 +2497,7 @@ function flushPassiveEffectsImpl() {
   // Layout effects have the same constraint.
 
   // First pass: Destroy stale passive effects.
+  // debugger
   const unmountEffects = pendingPassiveHookEffectsUnmount;
   pendingPassiveHookEffectsUnmount = [];
   for (let i = 0; i < unmountEffects.length; i += 2) {

@@ -852,6 +852,7 @@ function commitUnmount(finishedRoot, current, renderPriorityLevel) {
             const {destroy, tag} = effect;
             if (destroy !== undefined) {
               if ((tag & HookPassive) !== NoHookEffect) {
+                debugger
                 enqueuePendingPassiveHookEffectUnmount(current, effect);
               } else {
                 if (
