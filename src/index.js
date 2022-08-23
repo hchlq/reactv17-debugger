@@ -68,14 +68,20 @@ const App2 = () => {
 //   }, []);
 // }
 
-const Parent = () => {
-
+function Parent() {
   React.useEffect(() => {
-    console.log('effect running')
-    debugger
-  }, [])
+    console.log("Parent running");
+  }, []);
 
-  return null
-}
+  return <Child />;
+};
+
+function Child() {
+  React.useEffect(() => {
+    console.log("Child mount");
+  }, []);
+
+  return null;
+};
 
 ReactDom.render(<Parent />, document.getElementById("root"));

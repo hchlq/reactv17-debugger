@@ -439,20 +439,7 @@ function commitLifeCycles(finishedRoot, current, finishedWork, committedLanes) {
       // This is done to prevent sibling component effects from interfering with each other,
       // e.g. a destroy function in one component should never override a ref set
       // by a create function in another component during the same commit.
-      if (
-        enableProfilerTimer &&
-        enableProfilerCommitHooks &&
-        finishedWork.mode & ProfileMode
-      ) {
-        try {
-          startLayoutEffectTimer();
-          commitHookEffectListMount(HookLayout | HookHasEffect, finishedWork);
-        } finally {
-          recordLayoutEffectDuration(finishedWork);
-        }
-      } else {
-        commitHookEffectListMount(HookLayout | HookHasEffect, finishedWork);
-      }
+      commitHookEffectListMount(HookLayout | HookHasEffect, finishedWork);
 
       schedulePassiveEffects(finishedWork);
       return;
