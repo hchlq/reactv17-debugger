@@ -68,20 +68,61 @@ const App2 = () => {
 //   }, []);
 // }
 
+let a = 0;
 function Parent() {
   React.useEffect(() => {
-    console.log("Parent running");
-  }, []);
+    // console.log("Parent running");
+    return () => {
+      console.log("Parent unmount");
+    };
+  }, [a]);
 
-  return <Child />;
-};
+  return (
+    <>
+      <Child />
+      <Sibling />
+    </>
+  );
+}
 
 function Child() {
   React.useEffect(() => {
-    console.log("Child mount");
-  }, []);
+    // console.log("Child running");
+    return () => {
+      console.log("Child unmount");
+    };
+  }, [a]);
 
   return null;
+}
+
+function Sibling() {
+  React.useEffect(() => {
+    // console.log("Sibling running");
+    return () => {
+      console.log("Sibling unmount");
+    };
+  }, [a]);
+
+  return null;
+}
+
+const App = () => {
+  const [state, setState] = React.useState(0);
+
+  return (
+    <>
+      {state <= 1 && <Parent />}
+      <button
+        onClick={() => {
+          setState(state + 1);
+          a++;
+        }}
+      >
+        change
+      </button>
+    </>
+  );
 };
 
-ReactDom.render(<Parent />, document.getElementById("root"));
+ReactDom.render(<App />, document.getElementById("root"));
