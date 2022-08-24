@@ -2370,20 +2370,7 @@ function commitMutationEffects(root, renderPriorityLevel) {
 }
 
 function commitLayoutEffects(root, committedLanes) {
-  if (__DEV__) {
-    if (enableDebugTracing) {
-      logLayoutEffectsStarted(committedLanes);
-    }
-  }
-
-  if (enableSchedulingProfiler) {
-    markLayoutEffectsStarted(committedLanes);
-  }
-
-  // TODO: Should probably move the bulk of this function to commitWork.
   while (nextEffect !== null) {
-    setCurrentDebugFiberInDEV(nextEffect);
-
     const flags = nextEffect.flags;
 
     if (flags & (Update | Callback)) {
@@ -2391,30 +2378,11 @@ function commitLayoutEffects(root, committedLanes) {
       commitLayoutEffectOnFiber(root, current, nextEffect, committedLanes);
     }
 
-    if (enableScopeAPI) {
-      // TODO: This is a temporary solution that allowed us to transition away
-      // from React Flare on www.
-      if (flags & Ref && nextEffect.tag !== ScopeComponent) {
-        commitAttachRef(nextEffect);
-      }
-    } else {
-      if (flags & Ref) {
-        commitAttachRef(nextEffect);
-      }
+    if (flags & Ref) {
+      commitAttachRef(nextEffect);
     }
 
-    resetCurrentDebugFiberInDEV();
     nextEffect = nextEffect.nextEffect;
-  }
-
-  if (__DEV__) {
-    if (enableDebugTracing) {
-      logLayoutEffectsStopped();
-    }
-  }
-
-  if (enableSchedulingProfiler) {
-    markLayoutEffectsStopped();
   }
 }
 
@@ -2527,23 +2495,8 @@ function flushPassiveEffectsImpl() {
       const create = effect.create;
       effect.destroy = create();
     } catch (error) {
-      invariant(fiber !== null, 'Should be working on an effect.');
       captureCommitPhaseError(fiber, error);
     }
-  }
-
-  // Note: This currently assumes there are no passive effects on the root fiber
-  // because the root is not part of its own effect list.
-  // This could change in the future.
-  let effect = root.current.firstEffect;
-  while (effect !== null) {
-    const nextNextEffect = effect.nextEffect;
-    // Remove nextEffect pointer to assist GC
-    effect.nextEffect = null;
-    if (effect.flags & Deletion) {
-      detachFiberAfterEffects(effect);
-    }
-    effect = nextNextEffect;
   }
 
   executionContext = prevExecutionContext;
