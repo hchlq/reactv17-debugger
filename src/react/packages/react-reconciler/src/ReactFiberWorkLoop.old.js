@@ -2345,6 +2345,7 @@ function commitMutationEffects(root, renderPriorityLevel) {
         break;
       }
       case Update: {
+        // debugger
         const current = nextEffect.alternate;
         commitWork(current, nextEffect);
         break;

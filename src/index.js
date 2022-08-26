@@ -8,12 +8,14 @@ function Child() {
   const state = React.useContext(GlobalContext);
   React.useLayoutEffect(() => {
     return () => {
+      debugger
       console.log("Child effect1 unmount");
     };
   }, [state]);
 
   React.useLayoutEffect(() => {
     return () => {
+      // debugger
       console.log("Child effect2 unmount");
     };
   }, [state]);
