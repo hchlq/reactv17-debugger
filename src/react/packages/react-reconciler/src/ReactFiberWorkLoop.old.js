@@ -2350,6 +2350,7 @@ function commitMutationEffects(root, renderPriorityLevel) {
         break;
       }
       case Deletion: {
+        // debugger
         commitDeletion(root, nextEffect, renderPriorityLevel);
         break;
       }
@@ -2458,6 +2459,7 @@ function flushPassiveEffectsImpl() {
     effect.destroy = undefined;
 
     if (typeof destroy === 'function') {
+      // debugger
       try {
         destroy();
       } catch (error) {
