@@ -1024,7 +1024,7 @@ function mountEffectImpl(fiberFlags, hookFlags, create, deps) {
   const hook = mountWorkInProgressHook();
 
   const nextDeps = deps === undefined ? null : deps;
-  
+
   currentlyRenderingFiber.flags |= fiberFlags;
 
   hook.memoizedState = pushEffect(
@@ -1087,12 +1087,16 @@ function updateLayoutEffect(create, deps) {
   return updateEffectImpl(UpdateEffect, HookLayout, create, deps);
 }
 
+/**
+ * ref 是函数或者对象
+ */
 function imperativeHandleEffect(create, ref) {
   if (typeof ref === 'function') {
     const refCallback = ref;
     const inst = create();
     refCallback(inst);
     return () => {
+      // 销毁函数
       refCallback(null);
     };
   } else if (ref !== null && ref !== undefined) {
@@ -1100,6 +1104,7 @@ function imperativeHandleEffect(create, ref) {
     const inst = create();
     refObject.current = inst;
     return () => {
+      // 销毁函数
       refObject.current = null;
     };
   }
@@ -1118,17 +1123,6 @@ function mountImperativeHandle(ref, create, deps) {
 }
 
 function updateImperativeHandle(ref, create, deps) {
-  if (__DEV__) {
-    if (typeof create !== 'function') {
-      console.error(
-        'Expected useImperativeHandle() second argument to be a function ' +
-          'that creates a handle. Instead received: %s.',
-        create !== null ? typeof create : 'null',
-      );
-    }
-  }
-
-  // TODO: If deps are provided, should we skip comparing the ref itself?
   const effectDeps =
     deps !== null && deps !== undefined ? deps.concat([ref]) : null;
 

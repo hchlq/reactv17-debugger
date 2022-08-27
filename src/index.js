@@ -3,79 +3,118 @@
 import * as React from "react";
 import * as ReactDom from "react-dom";
 
-// const App = () => {
+// const GlobalContext = React.createContext(0);
+// function App() {
 //   const [state, setState] = React.useState(0);
 
-//   React.useLayoutEffect(() => {
-//     console.log(state);
-//     if (state & 2 == 0) return () => {}
-//     // return () => {}
-//   }, [state]);
+//   const update = React.useCallback(() => {
+//     setState(Math.random());
+//   }, []);
+//   return (
+//     <GlobalContext.Provider value={state}>
+//       App
+//       <Child update={update} />
+//       <Sibling />
+//     </GlobalContext.Provider>
+//   );
+// }
 
-//   return <h1 onClick={() => setState(state + 1)}>{state}</h1>;
+// const Sibling = () => {
+//   console.log("Sibling render");
+//   return <h1>Sibling</h1>;
 // };
 
-const GlobalContext = React.createContext();
-function Child() {
-  const state = React.useContext(GlobalContext);
-  React.useLayoutEffect(() => {
-    return () => {
-      console.log("Child effect1 unmount");
-    };
-  }, [state]);
+// const Child = React.memo(({ update }) => {
+//   const [state, setState] = React.useState(0);
+//   console.log("Child render");
+//   const handleClick = () => {
+//     setState(state);
+//     update();
+//   };
 
-  React.useLayoutEffect(() => {
-    return () => {
-      console.log("Child effect2 unmount");
-    };
-  }, [state]);
+//   return (
+//     <div>
+//       <h1 onClick={handleClick}>{state} child</h1>
+//       <SubChild />
+//       <SubChild2 />
+//     </div>
+//   );
+// });
 
-  return <div>Child</div>;
+// function SubChild() {
+//   console.log("SubChild render");
+//   React.useContext(GlobalContext);
+//   return (
+//     <div>
+//       SubChild <X />
+//     </div>
+//   );
+// }
+
+// function SubChild2() {
+//   console.log("SubChild2 render");
+//   return (
+//     <div>
+//       SubChild2
+//     </div>
+//   );
+// }
+
+// const X = () => {
+//   console.log("x render");
+//   return null;
+// };
+
+// function App() {
+//   const [state, setState] = React.useState(0);
+
+//   const callback = React.useCallback(() => {
+//     // ...
+//   }, []);
+
+//   const memo = React.useMemo(() => {
+//     return {};
+//   }, []);
+
+//   return (
+//     <div>
+//       <button onClick={() => setState(state + 1)}>更新</button>
+//       <Child memo={memo} callback={callback} name="App" />
+//     </div>
+//   );
+// }
+
+// const Child = React.memo(() => {
+//   console.log('Child render')
+//   return <div>Child</div>;
+// });
+
+class App extends React.Component {
+  state = {
+    count: 0,
+  };
+
+  handleClick = () => {
+    this.setState({
+      count: this.state.count + 1,
+    });
+  };
+
+  render() {
+    return (
+      <div>
+        <h1 onClick={this.handleClick}>Parent: {this.state.count}</h1>
+        <Child foo="foo" num={0} />
+      </div>
+    );
+  }
 }
 
-function Sibling() {
-  const state = React.useContext(GlobalContext);
-  React.useLayoutEffect(() => {
-    return () => {
-      console.log("Sibling unmount");
-    };
-  }, [state]);
-
-  return <div>sibling</div>;
+class Child extends React.PureComponent {
+  render() {
+    console.log("render");
+    return <h1>Child</h1>;
+  }
 }
 
-function Parent() {
-  const state = React.useContext(GlobalContext);
-  React.useLayoutEffect(() => {
-    return () => {
-      console.log("Parent unmount");
-    };
-  }, [state]);
-
-  return (
-    <>
-      <h3>parent</h3>
-      <Child />
-      <Sibling />
-    </>
-  );
-}
-
-const App = () => {
-  const [state, setState] = React.useState(0);
-
-  return (
-    <GlobalContext.Provider value={state}>
-      {state <= 1 && <Parent />}
-      <button
-        onClick={() => {
-          setState(state + 1);
-        }}
-      >
-        {state === 0 ? "update dependency" : "unmount Parent"}
-      </button>
-    </GlobalContext.Provider>
-  );
-};
-
-ReactDom.render(<App />, document.getElementById("root"));
+ReactDom.render(<App foo="foo" />, document.getElementById("root"));

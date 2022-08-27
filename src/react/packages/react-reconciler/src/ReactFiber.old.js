@@ -112,6 +112,7 @@ function FiberNode(tag, pendingProps, key, mode) {
 
   this.ref = null;
 
+  // props 默认是一个对象
   this.pendingProps = pendingProps;
   this.memoizedProps = null;
   this.updateQueue = null;
@@ -225,6 +226,10 @@ export function resolveLazyComponentTag(Component) {
 
 // This is used to create an alternate fiber to do work on.
 export function createWorkInProgress(current, pendingProps) {
+  // console.log('pendingProps: ', pendingProps)
+  // if (pendingProps !== null && typeof pendingProps === 'object') {
+  //   debugger
+  // }
   let workInProgress = current.alternate;
   if (workInProgress === null) {
     // We use a double buffering pooling technique because we know that we'll

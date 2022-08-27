@@ -400,19 +400,6 @@ function updateMemoComponent(
         renderLanes,
       );
     }
-    if (__DEV__) {
-      const innerPropTypes = type.propTypes;
-      if (innerPropTypes) {
-        // Inner memo component props aren't currently validated in createElement.
-        // We could move it there, but we'd still need this for lazy code path.
-        checkPropTypes(
-          innerPropTypes,
-          nextProps, // Resolved props
-          'prop',
-          getComponentName(type),
-        );
-      }
-    }
     const child = createFiberFromTypeAndProps(
       Component.type,
       null,
@@ -426,20 +413,7 @@ function updateMemoComponent(
     workInProgress.child = child;
     return child;
   }
-  if (__DEV__) {
-    const type = Component.type;
-    const innerPropTypes = type.propTypes;
-    if (innerPropTypes) {
-      // Inner memo component props aren't currently validated in createElement.
-      // We could move it there, but we'd still need this for lazy code path.
-      checkPropTypes(
-        innerPropTypes,
-        nextProps, // Resolved props
-        'prop',
-        getComponentName(type),
-      );
-    }
-  }
+
   const currentChild = current.child; // This is always exactly one child
   if (!includesSomeLane(updateLanes, renderLanes)) {
     // This will be the props with resolved defaultProps,
@@ -452,6 +426,7 @@ function updateMemoComponent(
       return bailoutOnAlreadyFinishedWork(current, workInProgress, renderLanes);
     }
   }
+
   // React DevTools reads this flag.
   workInProgress.flags |= PerformedWork;
   const newChild = createWorkInProgress(currentChild, nextProps);
@@ -687,6 +662,11 @@ function updateFunctionComponent(
     context,
     renderLanes,
   );
+
+  // debugger
+  // if (current !== null && !didReceiveUpdate) {
+  //   console.log('=====', current.type.name)
+  // }
 
   if (current !== null && !didReceiveUpdate) {
     // 移除老的 lanes
@@ -2760,10 +2740,10 @@ function bailoutOnAlreadyFinishedWork(current, workInProgress, renderLanes) {
     workInProgress.dependencies = current.dependencies;
   }
 
-  if (enableProfilerTimer) {
-    // Don't update "base" render times for bailouts.
-    stopProfilerTimerIfRunning(workInProgress);
-  }
+  // if (enableProfilerTimer) {
+  //   // Don't update "base" render times for bailouts.
+  //   stopProfilerTimerIfRunning(workInProgress);
+  // }
 
   markSkippedUpdateLanes(workInProgress.lanes);
 
@@ -2843,13 +2823,14 @@ function remountFiber(current, oldWorkInProgress, newWorkInProgress) {
 function beginWork(current, workInProgress, renderLanes) {
   const updateLanes = workInProgress.lanes;
   if (current !== null) {
+    // if (current?.tag === 0) console.log(didReceiveUpdate);
+    // if
+    // if (current?.type?.name === 'Sibling') {
+    //   debugger
+    // }
     const oldProps = current.memoizedProps;
     const newProps = workInProgress.pendingProps;
-
-    if (
-      oldProps !== newProps ||
-      hasLegacyContextChanged()
-    ) {
+    if (oldProps !== newProps) {
       // If props or context changed, mark the fiber as having performed work.
       // This may be unset if the props are determined to be equal later (memo).
       didReceiveUpdate = true;
@@ -3046,6 +3027,8 @@ function beginWork(current, workInProgress, renderLanes) {
   } else {
     didReceiveUpdate = false;
   }
+  // if (current?.type?.name === 'Child') console.log(didReceiveUpdate);
+  // if (current?.tag === 0) console.log(didReceiveUpdate);
 
   // Before entering the begin phase, clear pending update priority.
   // TODO: This assumes that we're about to evaluate the component and process
