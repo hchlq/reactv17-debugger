@@ -52,19 +52,19 @@ const TotalLanes = 31;
 // 车道
 // 1 数量越多说明车道越多
 
-export const NoLanes =  0b0000000000000000000000000000000;
-export const NoLane =  0b0000000000000000000000000000000;
+export const NoLanes = 0b0000000000000000000000000000000;
+export const NoLane = 0b0000000000000000000000000000000;
 
-export const SyncLane =  0b0000000000000000000000000000001;
+export const SyncLane = 0b0000000000000000000000000000001;
 export const SyncBatchedLane = 0b0000000000000000000000000000010;
 
-export const InputDiscreteHydrationLane =  0b0000000000000000000000000000100;
+export const InputDiscreteHydrationLane = 0b0000000000000000000000000000100;
 const InputDiscreteLanes = 0b0000000000000000000000000011000;
 
-const InputContinuousHydrationLane =  0b0000000000000000000000000100000;
-const InputContinuousLanes =  0b0000000000000000000000011000000;
+const InputContinuousHydrationLane = 0b0000000000000000000000000100000;
+const InputContinuousLanes = 0b0000000000000000000000011000000;
 
-export const DefaultHydrationLane =  0b0000000000000000000000100000000;
+export const DefaultHydrationLane = 0b0000000000000000000000100000000;
 export const DefaultLanes = 0b0000000000000000000111000000000;
 
 const TransitionHydrationLane = 0b0000000000000000001000000000000;
@@ -293,7 +293,7 @@ export function getNextLanes(root, wipLanes) {
   // are suspended.
   // debugger
   // console.log(getEqualOrHigherPriorityLanes(nextLanes))
-  // 例如 nextLanes 是 10000，那么 getEqualOrHigherPriorityLanes 计算出来的值为 011111 
+  // 例如 nextLanes 是 10000，那么 getEqualOrHigherPriorityLanes 计算出来的值为 011111
   nextLanes = pendingLanes & getEqualOrHigherPriorityLanes(nextLanes);
 
   // If we're already in the middle of a render, switching lanes will interrupt
@@ -425,7 +425,7 @@ export function markStarvedLanesAsExpired(root, currentTime) {
     // 比如 000000000 000000000 000000100 000000000，那么得到的为 31 - 22 = 9
     const index = pickArbitraryLaneIndex(lanes);
     // 得到对应的 lane
-    // e.g. index: 9, lanes: 10 00000000 
+    // e.g. index: 9, lanes: 10 00000000
     const lane = 1 << index;
 
     const expirationTime = expirationTimes[index];
@@ -439,7 +439,7 @@ export function markStarvedLanesAsExpired(root, currentTime) {
       ) {
         // 1. 不是 suspendedLane  或者 是 pingedLane
 
-        // Assumes timestamps are monotonically increasing.  
+        // Assumes timestamps are monotonically increasing.
         // monotonically increasing. 单调递增
         // 计算一个新的过期时间
         expirationTimes[index] = computeExpirationTime(lane, currentTime);
@@ -454,7 +454,7 @@ export function markStarvedLanesAsExpired(root, currentTime) {
     lanes &= ~lane;
 
     // e.g. lanes === 3
-    // 1. index === 1, lane === 2, lanes = 3 & ~2 === 1 
+    // 1. index === 1, lane === 2, lanes = 3 & ~2 === 1
     // 2. index === 0, lane === 1, lanes = 1 & ~1 === 0
   }
 }
@@ -690,7 +690,6 @@ export function createLaneMap(initial) {
  * 3. 计算 laneIndex 更新 eventTimes 对应的索引时间戳
  */
 export function markRootUpdated(root, updateLane, eventTime) {
-  // fiberRoot.pendingLane 合并当前 updateLane
   root.pendingLanes |= updateLane;
 
   // TODO: Theoretically, any update to any lane can unblock any other lane. But
@@ -706,7 +705,6 @@ export function markRootUpdated(root, updateLane, eventTime) {
   // Unsuspend any update at equal or lower priority.
   const higherPriorityLanes = updateLane - 1; // Turns 0b1000 into 0b0111
 
-  // 更新 suspendedLanes & pingedLanes
   root.suspendedLanes &= higherPriorityLanes;
   root.pingedLanes &= higherPriorityLanes;
 
@@ -714,10 +712,9 @@ export function markRootUpdated(root, updateLane, eventTime) {
 
   // 获取该车道 lane 对应的索引
   const index = laneToIndex(updateLane);
-  // debugger
+
   // We can always overwrite an existing timestamp because we prefer the most
   // recent event, and we assume time is monotonically increasing.
-  // debugger
   //! 存储eventTime
   eventTimes[index] = eventTime;
 }

@@ -525,13 +525,11 @@ function requestRetryLane(fiber) {
 export function scheduleUpdateOnFiber(fiber, lane, eventTime) {
   // 检查嵌套的更新数是否超过了 50
   checkForNestedUpdates();
-  warnAboutRenderPhaseUpdatesInDEV(fiber);
 
   //! 从 fiber 开始，向上合并本次的 lane
   const root = markUpdateLaneFromFiberToRoot(fiber, lane);
   if (root === null) {
     // 根为空
-    warnAboutUpdateOnUnmountedFiberInDEV(fiber);
     return null;
   }
 
@@ -540,6 +538,7 @@ export function scheduleUpdateOnFiber(fiber, lane, eventTime) {
   // root.pendingLanes |= lane
   markRootUpdated(root, lane, eventTime);
 
+  // 渲染时更新
   if (root === workInProgressRoot) {
     // Received an update to a tree that's in the middle of rendering. Mark
     // that there was an interleaved update work on this root. Unless the
@@ -648,41 +647,28 @@ export function scheduleUpdateOnFiber(fiber, lane, eventTime) {
 // on a fiber.
 function markUpdateLaneFromFiberToRoot(sourceFiber, lane) {
   // Update the source fiber's lanes
-  // 从当前 sourceFiber 开始，合并 lane
   sourceFiber.lanes = mergeLanes(sourceFiber.lanes, lane);
-  // 合并 sourceFiber 对应的另外一个 fiber 树，即视图上对应的该节点
   let alternate = sourceFiber.alternate;
   if (alternate !== null) {
     alternate.lanes = mergeLanes(alternate.lanes, lane);
   }
 
-  if (__DEV__) {
-    if (
-      alternate === null &&
-      (sourceFiber.flags & (Placement | Hydrating)) !== NoFlags
-    ) {
-      warnAboutUpdateOnNotYetMountedFiberInDEV(sourceFiber);
-    }
-  }
+  // 延此到 fiberRoot 的 childLanes 合并 lane
   // Walk the parent path to the root and update the child expiration time.
-  // 父亲的 childLanes 也要合并 lane
   let node = sourceFiber;
   let parent = sourceFiber.return;
   while (parent !== null) {
     parent.childLanes = mergeLanes(parent.childLanes, lane);
     alternate = parent.alternate;
+
     if (alternate !== null) {
       alternate.childLanes = mergeLanes(alternate.childLanes, lane);
-    } else {
-      if (__DEV__) {
-        if ((parent.flags & (Placement | Hydrating)) !== NoFlags) {
-          warnAboutUpdateOnNotYetMountedFiberInDEV(sourceFiber);
-        }
-      }
     }
+
     node = parent;
     parent = parent.return;
   }
+
   if (node.tag === HostRoot) {
     // HostRoot 类型的 node.stateNode 就是 fiberRoot
     const root = node.stateNode;
