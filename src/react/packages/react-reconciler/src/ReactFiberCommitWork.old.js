@@ -181,18 +181,10 @@ function safelyDetachRef(current) {
 }
 
 function safelyCallDestroy(current, destroy) {
-  if (__DEV__) {
-    invokeGuardedCallback(null, destroy, null);
-    if (hasCaughtError()) {
-      const error = clearCaughtError();
-      captureCommitPhaseError(current, error);
-    }
-  } else {
-    try {
-      destroy();
-    } catch (error) {
-      captureCommitPhaseError(current, error);
-    }
+  try {
+    destroy();
+  } catch (error) {
+    captureCommitPhaseError(current, error);
   }
 }
 
@@ -800,26 +792,15 @@ function commitUnmount(finishedRoot, current, renderPriorityLevel) {
         const lastEffect = updateQueue.lastEffect;
         if (lastEffect !== null) {
           const firstEffect = lastEffect.next;
-
           let effect = firstEffect;
           do {
             const {destroy, tag} = effect;
             if (destroy !== undefined) {
               if ((tag & HookPassive) !== NoHookEffect) {
-                // debugger;
                 enqueuePendingPassiveHookEffectUnmount(current, effect);
               } else {
-                if (
-                  enableProfilerTimer &&
-                  enableProfilerCommitHooks &&
-                  current.mode & ProfileMode
-                ) {
-                  startLayoutEffectTimer();
-                  safelyCallDestroy(current, destroy);
-                  recordLayoutEffectDuration(current);
-                } else {
-                  safelyCallDestroy(current, destroy);
-                }
+                // useLayoutEffect
+                safelyCallDestroy(current, destroy);
               }
             }
             effect = effect.next;
@@ -903,16 +884,20 @@ function commitNestedUnmounts(finishedRoot, root, renderPriorityLevel) {
       node = node.child;
       continue;
     }
+
     if (node === root) {
       return;
     }
+
     while (node.sibling === null) {
       if (node.return === null || node.return === root) {
         return;
       }
       node = node.return;
     }
+
     node.sibling.return = node.return;
+
     node = node.sibling;
   }
 }

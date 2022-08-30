@@ -704,10 +704,6 @@ function rerenderReducer(reducer, initialArg, init) {
 }
 
 function readFromUnsubcribedMutableSource(root, source, getSnapshot) {
-  if (__DEV__) {
-    warnAboutMultipleRenderersDEV(source);
-  }
-
   const getVersion = source._getVersion;
   const version = getVersion(source._source);
 

@@ -2277,7 +2277,6 @@ function commitBeforeMutationEffects() {
 function commitMutationEffects(root, renderPriorityLevel) {
   // TODO: Should probably move the bulk of this function to commitWork.
   while (nextEffect !== null) {
-    setCurrentDebugFiberInDEV(nextEffect);
 
     const flags = nextEffect.flags;
 
@@ -2289,13 +2288,6 @@ function commitMutationEffects(root, renderPriorityLevel) {
       const current = nextEffect.alternate;
       if (current !== null) {
         commitDetachRef(current);
-      }
-      if (enableScopeAPI) {
-        // TODO: This is a temporary solution that allowed us to transition away
-        // from React Flare on www.
-        if (nextEffect.tag === ScopeComponent) {
-          commitAttachRef(nextEffect);
-        }
       }
     }
 
@@ -2339,6 +2331,7 @@ function commitMutationEffects(root, renderPriorityLevel) {
         break;
       }
       case Update: {
+        // debugger
         const current = nextEffect.alternate;
         commitWork(current, nextEffect);
         break;
@@ -2436,19 +2429,11 @@ function flushPassiveEffectsImpl() {
     return false;
   }
 
-  const root = rootWithPendingPassiveEffects;
   rootWithPendingPassiveEffects = null;
   pendingPassiveEffectsLanes = NoLanes;
 
   const prevExecutionContext = executionContext;
   executionContext |= CommitContext;
-
-  // It's important that ALL pending passive effect destroy functions are called
-  // before ANY passive effect create functions are called.
-  // Otherwise effects in sibling components might interfere with each other.
-  // e.g. a destroy function in one component may unintentionally override a ref
-  // value set by a create function in another component.
-  // Layout effects have the same constraint.
 
   // First pass: Destroy stale passive effects.
   // debugger
