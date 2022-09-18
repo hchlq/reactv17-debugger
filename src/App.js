@@ -1,27 +1,41 @@
 import * as React from "react";
 
-const { Suspense, lazy, memo, useState } = React
+const AppContext = React.createContext(0);
 
-const OtherComponent = lazy(() => import("./test/lazy"));
+function App({ children }) {
+  console.log('app render')
+  const [count, setCount] = React.useState(0);
 
-const MemoComponent = memo(function X(){
-  return <div>11111</div>
-})
+  const handleClick = () => {
+    setCount(count + 1);
+  };
 
-function App() {
-  const [count, setCount] = useState(0)
   return (
-    <div className="App">
-      <header>header</header>
-      <main>main</main>
-      <footer>footer</footer>
-      {/* <Suspense fallback={<div>Loading...</div>}>
-        <OtherComponent />
-      </Suspense> */}
-      <h1 onClick={() => setCount(count + 1)}>{ count }</h1>
-      <MemoComponent />
+    <div>
+      <button onClick={handleClick}>count + 1</button>
+      <AppContext.Provider value={count}>{children}</AppContext.Provider>
     </div>
   );
 }
 
-export default App;
+const Parent = () => {
+  console.log("parent render");
+  return (
+    <div>
+      Parent
+    </div>
+  );
+};
+
+export default function Test() {
+  // debugger
+  const [_, setState] = React.useState(0);
+  return (
+    <>
+      <button onClick={() => setState(_ + 1)}>set State</button>
+      <App>
+        <Parent />
+      </App>
+    </>
+  );
+}

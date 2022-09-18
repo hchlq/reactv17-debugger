@@ -2594,37 +2594,22 @@ function updatePortalComponent(current, workInProgress, renderLanes) {
 }
 
 let hasWarnedAboutUsingNoValuePropOnContextProvider = false;
-
+window.test = []
 function updateContextProvider(current, workInProgress, renderLanes) {
   const providerType = workInProgress.type;
   const context = providerType._context;
 
   const newProps = workInProgress.pendingProps;
   const oldProps = workInProgress.memoizedProps;
-
+  // console.log(newProps === oldProps)
   const newValue = newProps.value;
-
-  if (__DEV__) {
-    if (!('value' in newProps)) {
-      if (!hasWarnedAboutUsingNoValuePropOnContextProvider) {
-        hasWarnedAboutUsingNoValuePropOnContextProvider = true;
-        console.error(
-          'The `value` prop is required for the `<Context.Provider>`. Did you misspell it or forget to pass it?',
-        );
-      }
-    }
-    const providerPropTypes = workInProgress.type.propTypes;
-
-    if (providerPropTypes) {
-      checkPropTypes(providerPropTypes, newProps, 'prop', 'Context.Provider');
-    }
-  }
 
   pushProvider(workInProgress, newValue);
 
   if (oldProps !== null) {
     const oldValue = oldProps.value;
     const changedBits = calculateChangedBits(context, newValue, oldValue);
+    // console.log(changedBits)
     if (changedBits === 0) {
       // No change. Bailout early if children are the same.
       if (
@@ -2645,7 +2630,10 @@ function updateContextProvider(current, workInProgress, renderLanes) {
   }
 
   const newChildren = newProps.children;
+  window.test.push(newChildren)
   reconcileChildren(current, workInProgress, newChildren, renderLanes);
+
+  // debugger
   return workInProgress.child;
 }
 
@@ -2821,6 +2809,7 @@ function remountFiber(current, oldWorkInProgress, newWorkInProgress) {
 }
 
 function beginWork(current, workInProgress, renderLanes) {
+  // if (workInProgress.elementType?.name === 'App') debugger
   const updateLanes = workInProgress.lanes;
   if (current !== null) {
     // if (current?.tag === 0) console.log(didReceiveUpdate);
@@ -2830,6 +2819,10 @@ function beginWork(current, workInProgress, renderLanes) {
     // }
     const oldProps = current.memoizedProps;
     const newProps = workInProgress.pendingProps;
+    if (workInProgress.elementType?.name === 'Parent') {
+      console.log('old === new', oldProps === newProps);
+      // debugger
+    }
     if (oldProps !== newProps) {
       // If props or context changed, mark the fiber as having performed work.
       // This may be unset if the props are determined to be equal later (memo).

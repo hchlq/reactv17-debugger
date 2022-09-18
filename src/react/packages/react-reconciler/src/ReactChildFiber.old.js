@@ -1136,10 +1136,6 @@ function ChildReconciler(shouldTrackSideEffects) {
               const existing = useFiber(child, element.props);
               existing.ref = coerceRef(returnFiber, child, element);
               existing.return = returnFiber;
-              if (__DEV__) {
-                existing._debugSource = element._source;
-                existing._debugOwner = element._owner;
-              }
               return existing;
             }
             break;
@@ -1369,6 +1365,7 @@ export function cloneChildFibers(current, workInProgress) {
 
   let currentChild = workInProgress.child;
   // 创建 currentChild 的 alternate
+  // debugger
   let newChild = createWorkInProgress(currentChild, currentChild.pendingProps);
 
   workInProgress.child = newChild;
