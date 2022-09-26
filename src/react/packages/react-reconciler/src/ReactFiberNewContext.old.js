@@ -67,49 +67,32 @@ export function exitDisallowedContextReadInDEV() {
   }
 }
 
+/**
+ * 往栈中增加 Provider
+ */
 export function pushProvider(providerFiber, nextValue) {
   const context = providerFiber.type._context;
 
+  // 1. { 0: null }  valueCursor.value: 'first'
+  // 2. { 0: null, 1: 'first' } valueCursor.value: 'second'
   if (isPrimaryRenderer) {
-    push(valueCursor, context._currentValue, providerFiber);
+    // react-dom 渲染
 
+    // 1. 先加入到栈内
+    // 2. 更新 value
+    // debugger
+    push(valueCursor, context._currentValue, providerFiber);
     context._currentValue = nextValue;
-    if (__DEV__) {
-      if (
-        context._currentRenderer !== undefined &&
-        context._currentRenderer !== null &&
-        context._currentRenderer !== rendererSigil
-      ) {
-        console.error(
-          'Detected multiple renderers concurrently rendering the ' +
-            'same context provider. This is currently unsupported.',
-        );
-      }
-      context._currentRenderer = rendererSigil;
-    }
   } else {
     push(valueCursor, context._currentValue2, providerFiber);
 
     context._currentValue2 = nextValue;
-    if (__DEV__) {
-      if (
-        context._currentRenderer2 !== undefined &&
-        context._currentRenderer2 !== null &&
-        context._currentRenderer2 !== rendererSigil
-      ) {
-        console.error(
-          'Detected multiple renderers concurrently rendering the ' +
-            'same context provider. This is currently unsupported.',
-        );
-      }
-      context._currentRenderer2 = rendererSigil;
-    }
   }
 }
 
 export function popProvider(providerFiber) {
   const currentValue = valueCursor.current;
-
+  // debugger
   pop(valueCursor, providerFiber);
 
   const context = providerFiber.type._context;
@@ -130,15 +113,6 @@ export function calculateChangedBits(context, newValue, oldValue) {
         ? context._calculateChangedBits(oldValue, newValue)
         : MAX_SIGNED_31_BIT_INT;
 
-    if (__DEV__) {
-      if ((changedBits & MAX_SIGNED_31_BIT_INT) !== changedBits) {
-        console.error(
-          'calculateChangedBits: Expected the return value to be a ' +
-            '31-bit integer. Instead received: %s',
-          changedBits,
-        );
-      }
-    }
     return changedBits | 0;
   }
 }
@@ -180,10 +154,12 @@ export function propagateContextChange(
   }
   while (fiber !== null) {
     let nextFiber;
-
+    
     // Visit this fiber.
     const list = fiber.dependencies;
     if (list !== null) {
+      console.log(fiber.type.name)
+      // debugger;
       nextFiber = fiber.child;
 
       let dependency = list.firstContext;
@@ -193,26 +169,13 @@ export function propagateContextChange(
           dependency.context === context &&
           (dependency.observedBits & changedBits) !== 0
         ) {
-          // Match! Schedule an update on this fiber.
-
-          if (fiber.tag === ClassComponent) {
-            // Schedule a force update on the work-in-progress.
-            const update = createUpdate(
-              NoTimestamp,
-              pickArbitraryLane(renderLanes),
-            );
-            update.tag = ForceUpdate;
-            // TODO: Because we don't have a work-in-progress, this will add the
-            // update to the current fiber, too, which means it will persist even if
-            // this render is thrown away. Since it's a race condition, not sure it's
-            // worth fixing.
-            enqueueUpdate(fiber, update);
-          }
           fiber.lanes = mergeLanes(fiber.lanes, renderLanes);
           const alternate = fiber.alternate;
+
           if (alternate !== null) {
             alternate.lanes = mergeLanes(alternate.lanes, renderLanes);
           }
+
           scheduleWorkOnParentPath(fiber.return, renderLanes);
 
           // Mark the updated lanes on the list, too.
@@ -225,31 +188,9 @@ export function propagateContextChange(
         dependency = dependency.next;
       }
     } else if (fiber.tag === ContextProvider) {
+      debugger
       // Don't scan deeper if this is a matching provider
       nextFiber = fiber.type === workInProgress.type ? null : fiber.child;
-    } else if (
-      enableSuspenseServerRenderer &&
-      fiber.tag === DehydratedFragment
-    ) {
-      // If a dehydrated suspense boundary is in this subtree, we don't know
-      // if it will have any context consumers in it. The best we can do is
-      // mark it as having updates.
-      const parentSuspense = fiber.return;
-      invariant(
-        parentSuspense !== null,
-        'We just came from a parent so we must have had a parent. This is a bug in React.',
-      );
-      parentSuspense.lanes = mergeLanes(parentSuspense.lanes, renderLanes);
-      const alternate = parentSuspense.alternate;
-      if (alternate !== null) {
-        alternate.lanes = mergeLanes(alternate.lanes, renderLanes);
-      }
-      // This is intentionally passing this fiber as the parent
-      // because we want to schedule this fiber as having work
-      // on its children. We'll use the childLanes on
-      // this fiber to indicate that a context has changed.
-      scheduleWorkOnParentPath(parentSuspense, renderLanes);
-      nextFiber = fiber.sibling;
     } else {
       // Traverse down.
       nextFiber = fiber.child;
@@ -320,22 +261,18 @@ export function readContext(context, observedBits) {
     }
 
     const contextItem = {
-      context: context,
+      context,
       observedBits: resolvedObservedBits,
       next: null,
     };
 
+    // 构建依赖链表
     if (lastContextDependency === null) {
-      invariant(
-        currentlyRenderingFiber !== null,
-        'Context can only be read while React is rendering. ' +
-          'In classes, you can read it in the render method or getDerivedStateFromProps. ' +
-          'In function components, you can read it directly in the function body, but not ' +
-          'inside Hooks like useReducer() or useMemo().',
-      );
-
       // This is the first dependency for this component. Create a new list.
       lastContextDependency = contextItem;
+
+      // 当前 Fiber 上依赖的
+      // debugger
       currentlyRenderingFiber.dependencies = {
         lanes: NoLanes,
         firstContext: contextItem,
@@ -346,5 +283,6 @@ export function readContext(context, observedBits) {
       lastContextDependency = lastContextDependency.next = contextItem;
     }
   }
+
   return isPrimaryRenderer ? context._currentValue : context._currentValue2;
 }

@@ -902,6 +902,7 @@ function completeWork(current, workInProgress, renderLanes) {
       return null;
     case ContextProvider:
       // Pop provider fiber
+      // debugger
       popProvider(workInProgress);
       return null;
     case IncompleteClassComponent: {

@@ -1,41 +1,61 @@
 import * as React from "react";
+const { createContext, useContext, useState } = React;
 
-const AppContext = React.createContext(0);
+const ColorContext = createContext("black");
 
-function App({ children }) {
-  console.log('app render')
-  const [count, setCount] = React.useState(0);
-
-  const handleClick = () => {
-    setCount(count + 1);
-  };
-
+const Child = () => {
+  console.log("Child render");
+  const color = useContext(ColorContext);
   return (
     <div>
-      <button onClick={handleClick}>count + 1</button>
-      <AppContext.Provider value={count}>{children}</AppContext.Provider>
-    </div>
-  );
-}
-
-const Parent = () => {
-  console.log("parent render");
-  return (
-    <div>
-      Parent
+      <h1>Child color: {color}</h1>
+      <SubChild />
     </div>
   );
 };
 
-export default function Test() {
-  // debugger
-  const [_, setState] = React.useState(0);
+const Sibling = () => {
+  console.log("Sibling render");
+  const color = useContext(ColorContext);
+  return <h1>Sibling color: {color}</h1>;
+};
+
+const SubChild = () => {
+  const color = useContext(ColorContext);
   return (
-    <>
-      <button onClick={() => setState(_ + 1)}>set State</button>
-      <App>
-        <Parent />
-      </App>
-    </>
+    <h1>
+      SubChild color: {color}
+      <ColorContext.Consumer>
+        {(value) => <h2>consumer value: {value}</h2>}
+      </ColorContext.Consumer>
+      <ColorContext.Consumer>
+        {(value) => <h2>consumer value: {value}</h2>}
+      </ColorContext.Consumer>
+    </h1>
   );
-}
+};
+
+const Parent = () => {
+  const color = useContext(ColorContext);
+  return (
+    <div>
+      <h1>Parent color: {color}</h1>
+      <Child />
+      <Sibling />
+    </div>
+  );
+};
+
+const App = () => {
+  const [color, setState] = useState("black");
+  return (
+    <div>
+      <button onClick={() => setState("" + Math.random())}>update Color</button>
+      <ColorContext.Provider value={color}>
+        <Parent />
+      </ColorContext.Provider>
+    </div>
+  );
+};
+
+export default App;

@@ -2593,29 +2593,25 @@ function updatePortalComponent(current, workInProgress, renderLanes) {
   return workInProgress.child;
 }
 
-let hasWarnedAboutUsingNoValuePropOnContextProvider = false;
-window.test = []
 function updateContextProvider(current, workInProgress, renderLanes) {
   const providerType = workInProgress.type;
   const context = providerType._context;
 
   const newProps = workInProgress.pendingProps;
   const oldProps = workInProgress.memoizedProps;
-  // console.log(newProps === oldProps)
+
   const newValue = newProps.value;
 
+  // 往 stack 中增加当前 Fiber
   pushProvider(workInProgress, newValue);
 
+  // 更新 props
   if (oldProps !== null) {
     const oldValue = oldProps.value;
     const changedBits = calculateChangedBits(context, newValue, oldValue);
-    // console.log(changedBits)
     if (changedBits === 0) {
       // No change. Bailout early if children are the same.
-      if (
-        oldProps.children === newProps.children &&
-        !hasLegacyContextChanged()
-      ) {
+      if (oldProps.children === newProps.children) {
         return bailoutOnAlreadyFinishedWork(
           current,
           workInProgress,
@@ -2630,71 +2626,31 @@ function updateContextProvider(current, workInProgress, renderLanes) {
   }
 
   const newChildren = newProps.children;
-  window.test.push(newChildren)
+
   reconcileChildren(current, workInProgress, newChildren, renderLanes);
 
-  // debugger
   return workInProgress.child;
 }
 
-let hasWarnedAboutUsingContextAsConsumer = false;
-
 function updateContextConsumer(current, workInProgress, renderLanes) {
+  // debugger
   let context = workInProgress.type;
-  // The logic below for Context differs depending on PROD or DEV mode. In
-  // DEV mode, we create a separate object for Context.Consumer that acts
-  // like a proxy to Context. This proxy object adds unnecessary code in PROD
-  // so we use the old behaviour (Context.Consumer references Context) to
-  // reduce size and overhead. The separate object references context via
-  // a property called "_context", which also gives us the ability to check
-  // in DEV mode if this property exists or not and warn if it does not.
-  if (__DEV__) {
-    if (context._context === undefined) {
-      // This may be because it's a Context (rather than a Consumer).
-      // Or it may be because it's older React where they're the same thing.
-      // We only want to warn if we're sure it's a new React.
-      if (context !== context.Consumer) {
-        if (!hasWarnedAboutUsingContextAsConsumer) {
-          hasWarnedAboutUsingContextAsConsumer = true;
-          console.error(
-            'Rendering <Context> directly is not supported and will be removed in ' +
-              'a future major release. Did you mean to render <Context.Consumer> instead?',
-          );
-        }
-      }
-    } else {
-      context = context._context;
-    }
-  }
+
   const newProps = workInProgress.pendingProps;
+
   const render = newProps.children;
 
-  if (__DEV__) {
-    if (typeof render !== 'function') {
-      console.error(
-        'A context consumer was rendered with multiple children, or a child ' +
-          "that isn't a function. A context consumer expects a single child " +
-          'that is a function. If you did pass a function, make sure there ' +
-          'is no trailing or leading whitespace around it.',
-      );
-    }
-  }
-
   prepareToReadContext(workInProgress, renderLanes);
+
   const newValue = readContext(context, newProps.unstable_observedBits);
-  let newChildren;
-  if (__DEV__) {
-    ReactCurrentOwner.current = workInProgress;
-    setIsRendering(true);
-    newChildren = render(newValue);
-    setIsRendering(false);
-  } else {
-    newChildren = render(newValue);
-  }
+
+  let newChildren = render(newValue);
 
   // React DevTools reads this flag.
   workInProgress.flags |= PerformedWork;
+
   reconcileChildren(current, workInProgress, newChildren, renderLanes);
+
   return workInProgress.child;
 }
 
@@ -3113,10 +3069,12 @@ function beginWork(current, workInProgress, renderLanes) {
       return updateMode(current, workInProgress, renderLanes);
     case Profiler:
       return updateProfiler(current, workInProgress, renderLanes);
+
     case ContextProvider:
       return updateContextProvider(current, workInProgress, renderLanes);
     case ContextConsumer:
       return updateContextConsumer(current, workInProgress, renderLanes);
+
     case MemoComponent: {
       const type = workInProgress.type;
       const unresolvedProps = workInProgress.pendingProps;

@@ -29,39 +29,24 @@ function isEmpty() {
 
 function pop(cursor, fiber) {
   if (index < 0) {
-    if (__DEV__) {
-      console.error('Unexpected pop.');
-    }
     return;
-  }
-
-  if (__DEV__) {
-    if (fiber !== fiberStack[index]) {
-      console.error('Unexpected Fiber popped.');
-    }
   }
 
   cursor.current = valueStack[index];
 
   valueStack[index] = null;
-
-  if (__DEV__) {
-    fiberStack[index] = null;
-  }
-
   index--;
 }
 
-function push(cursor, value, fiber) {
+function push(cursor, value) {
   index++;
 
+  // 将值放入栈中
   valueStack[index] = cursor.current;
 
-  if (__DEV__) {
-    fiberStack[index] = fiber;
-  }
-
+  // 更新 current
   cursor.current = value;
+
 }
 
 function checkThatStackIsEmpty() {
